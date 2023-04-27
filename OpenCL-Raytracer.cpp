@@ -2,9 +2,12 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include "Ray3D.hpp"
 #include "ObjectData.hpp"
+#include <chrono>
 #include <vector>
 #include <fstream>
 #include <iostream>
+#include "Light.hpp"
+#include "SceneLoader.hpp"
 
 Ray3D screenSpaceToViewSpace(float width, float height, glm::vec2 pos, float angle) {
     float halfWidth = width / 2.0f;
@@ -26,16 +29,43 @@ inline glm::vec3 shadeAmbient(HitRecord& hit) {
     return hit.mat.ambient;
 }
 
-int main(void) {
+int main(int argc, char** argv) {
+    // TODO: add flags for setting these vars
     int width = 800, height = 800;
     float fov = glm::radians(60.f);
     fov *= 0.5f;
+    // TODO: add flag for output file
+    std::string outFileLoc = "render.ppm";
 
-    glm::mat4 modelview = glm::lookAt(glm::vec3(0,0,10), glm::vec3(0,0,0), glm::vec3(0,1,0));
+    if (argc > 2) {
+        return 1;
+    }
 
-    Material sphereMat;
-    sphereMat.ambient = { 0.4, 0., 0.8 };
-    ObjectData sphere(ObjectData::PrimativeType::sphere, sphereMat, modelview);
+    std::string sceneFileLoc;
+    if (argc < 2) {
+        std::cout << "Enter the scene file to render:\n";
+        std::cin >> sceneFileLoc;
+    }
+    else {
+        sceneFileLoc = argv[1];
+    }
+
+    std::vector<ObjectData> objects;
+    std::vector<Light> lights;
+
+    try {
+        SceneLoader::Load(sceneFileLoc, objects, lights);
+    }
+    catch (std::exception err) {
+        std::cout << err.what() << std::endl;
+        return 1;
+    }
+
+    std::cout << "Scene file loaded without any errors.\n";
+
+    std::cout << "Rendering...\n";
+
+    auto startTime = std::chrono::high_resolution_clock::now();
 
     std::vector<std::vector<HitRecord> > rayHits(height);
     std::vector<std::vector<glm::vec3> > pixelData(height);
@@ -50,7 +80,9 @@ int main(void) {
         for (int ii = 0; ii < width; ++ii) {
             Ray3D ray = screenSpaceToViewSpace((float)width, (float)height, glm::vec2(ii, height - jj), fov);
 
-            sphere.Raycast(ray, hitsRow[ii]);
+            for (auto& obj : objects) {
+                obj.Raycast(ray, hitsRow[ii]);
+            }
 
             if (hitsRow[ii].time < MAX_FLOAT) {
                 //pixelData[jj][ii] = shadeHitTest(hitsRow[ii]);
@@ -61,8 +93,15 @@ int main(void) {
         }
     }
 
-    std::ofstream op("render.ppm");
+    auto endTime = std::chrono::high_resolution_clock::now();
 
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
+
+    std::cout << "Render finished in " << duration.count() << "ms.\n";
+
+    std::cout << "Exporting to file '" << outFileLoc << "'...\n";
+
+    std::ofstream op(outFileLoc);
 
     op << "P3" << "\n";
     op << width << " " << height << "\n";
@@ -75,6 +114,8 @@ int main(void) {
             op << glm::min(255, (int)floorf(pixelData[jj][ii].b)) << std::endl;
         }
     }
+
+    std::cout << "Export finished.\n";
 
     return 0;
 }

@@ -108,7 +108,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard>stdcpp20</LanguageStandard>
       <AdditionalIncludeDirectories>C:\Users\pinej\Documents\libs\glfw-3.3.8.bin.WIN64\include;C:\Users\pinej\Documents\libs\glm;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.1\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
@@ -138,6 +138,7 @@
     <ClCompile Include="ObjectData.cpp" />
     <ClCompile Include="OpenCL-Raytracer.cpp" />
     <ClCompile Include="OpenCL-TaskDemo.hpp" />
+    <ClCompile Include="SceneLoader.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="vector_add_kernel.cl" />
@@ -148,6 +149,13 @@
     <ClInclude Include="Material.hpp" />
     <ClInclude Include="ObjectData.hpp" />
     <ClInclude Include="Ray3D.hpp" />
+    <ClInclude Include="SceneLoader.hpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="simpleSphere.txt">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</DeploymentContent>
+    </Text>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

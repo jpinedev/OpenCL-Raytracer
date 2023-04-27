@@ -24,6 +24,9 @@
     <ClCompile Include="ObjectData.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="SceneLoader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="vector_add_kernel.cl">
@@ -46,5 +49,13 @@
     <ClInclude Include="HitRecord.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="SceneLoader.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="simpleSphere.txt">
+      <Filter>Resource Files</Filter>
+    </Text>
   </ItemGroup>
 </Project>
