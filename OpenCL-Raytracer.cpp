@@ -186,7 +186,7 @@ int main(int argc, char** argv) {
     op << "255\n";
     for (int jj = 0; jj < height; ++jj) {
         for (int ii = 0; ii < width; ++ii) {
-            pixelData[jj][ii] = shadeHitTest(rayHits[jj][ii]);
+            if (rayHits[jj][ii].time < MAX_FLOAT) pixelData[jj][ii] = shadeHitTest(rayHits[jj][ii]);
             pixelData[jj][ii] *= 255.f;
             op << glm::min(255, (int)floorf(pixelData[jj][ii].r)) << " ";
             op << glm::min(255, (int)floorf(pixelData[jj][ii].g)) << " ";

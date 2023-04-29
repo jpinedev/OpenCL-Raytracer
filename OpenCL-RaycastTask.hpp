@@ -84,7 +84,7 @@ static int raycastRays(const vector<ObjectData>& objects, const vector<Ray3D>& r
     ret = clEnqueueWriteBuffer(command_queue, rays_mem_obj, CL_TRUE, 0,
         RAY_LIST_SIZE * sizeof(float), rayArr, 0, NULL, NULL);
     ret = clEnqueueWriteBuffer(command_queue, hits_mem_obj, CL_TRUE, 0,
-        HITTEST_LIST_SIZE * sizeof(uint8_t), rayArr, 0, NULL, NULL);
+        HITTEST_LIST_SIZE * sizeof(uint8_t), hitTestArr, 0, NULL, NULL);
 
     // Create a program from the kernel source
     cl_program program = clCreateProgramWithSource(context, 1,
@@ -114,7 +114,8 @@ static int raycastRays(const vector<ObjectData>& objects, const vector<Ray3D>& r
         RAYCAST_COUNT * sizeof(uint8_t), hitTestArr, 0, NULL, NULL);
 
     for (int i = 0; i < RAYCAST_COUNT; i++) {
-        if (hitTestArr[i] > 0U) hits[i / hits.size()][i % hits.size()].time = 1.f;
+        if (hitTestArr[i] > 0U)
+            hits[i / hits.size()][i % hits.size()].time = 1.f;
     }
 
     // Clean up

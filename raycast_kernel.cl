@@ -2,8 +2,6 @@ __kernel void raycast(__global const int sizeOfObj, __global const int count, __
     // Get the index of the current element to be processed
     int i = get_global_id(0);
 
-    hits[i] = 0;
-
     float3* ray = rays + i * 2;
 
     float3 rayStart, rayDir;
