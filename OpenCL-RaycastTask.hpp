@@ -92,6 +92,15 @@ static int raycastRays(const vector<ObjectData>& objects, const vector<Ray3D>& r
 
     // Build the program
     ret = clBuildProgram(program, 1, &device_id, NULL, NULL, NULL);
+    cl_build_status status;
+    ret = clGetProgramBuildInfo(program, device_id, CL_PROGRAM_BUILD_STATUS, sizeof(cl_build_status), &status, NULL);
+    if (ret != 0 || status != CL_BUILD_SUCCESS) {
+        std::cout << ret << endl;
+
+        size_t s;
+        ret = clGetProgramBuildInfo(program, device_id, CL_PROGRAM_BUILD_LOG, MAX_SOURCE_SIZE, source_str, &s);
+        std::cout << source_str;
+    }
 
     // Create the OpenCL kernel
     cl_kernel kernel = clCreateKernel(program, "raycast", &ret);

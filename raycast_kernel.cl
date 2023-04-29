@@ -1,16 +1,16 @@
-__kernel void raycast(__global const int sizeOfObj, __global const int count, __global const unsigned char* objs, __global float3* rays, __global unsigned char* hits) {
+__kernel void raycast(const ulong sizeOfObj, const ulong count, __global const uchar* objs, __global const float3* rays, __global uchar* hits) {
     // Get the index of the current element to be processed
     int i = get_global_id(0);
 
-    float3* ray = rays + i * 2;
+    const float3* ray = rays + i * 2;
 
     float3 rayStart, rayDir;
 
     // Do the operation
 
     for (int objIndex = 0; objIndex < count; ++objIndex) {
-        unsigned char* obj = objs + objIndex * sizeOfObj;
-        float* mvInverse = (float*)(obj + 52U) + 1);
+        const unsigned char* obj = objs + objIndex * sizeOfObj;
+        float* mvInverse = (float*)(obj + 52U + 1);
 
         rayStart.x = mvInverse[0] * ray[0].x + mvInverse[4] * ray[0].y + mvInverse[8] * ray[0].z + mvInverse[12] * 1.f;
         rayStart.y = mvInverse[1] * ray[0].x + mvInverse[5] * ray[0].y + mvInverse[9] * ray[0].z + mvInverse[13] * 1.f;
@@ -22,6 +22,7 @@ __kernel void raycast(__global const int sizeOfObj, __global const int count, __
 
         switch (*(obj + 52U + 3 * 4U * 16U)) {
         case 0: // Sphere
+        {
             // Solve quadratic
             float A = rayDir.x * rayDir.x +
                 rayDir.y * rayDir.y +
@@ -36,7 +37,7 @@ __kernel void raycast(__global const int sizeOfObj, __global const int count, __
             // no intersection
             if (radical < 0) continue;
 
-            float root = sqrtf(radical);
+            float root = sqrt(radical);
 
             float t1 = (-B - root) / (2.f * A);
             float t2 = (-B + root) / (2.f * A);
@@ -47,9 +48,9 @@ __kernel void raycast(__global const int sizeOfObj, __global const int count, __
 
             hits[i] = 1;
             break;
+        }
 
         case 1: // Box
-
             break;
         }
     }

@@ -1,4 +1,5 @@
 #include "ObjectData.hpp"
+#include <iostream>
 
 ObjectData::ObjectData(PrimativeType type, Material& mat, glm::mat4 mv) :
     mat(mat),
@@ -19,6 +20,7 @@ void ObjectData::Serialize(uint8_t*& dest) const
     dest += 16 * sizeof(float);
 
     memcpy(dest, &type, sizeof(PrimativeType));
+    std::cout << (int)*dest << std::endl;
     dest += sizeof(PrimativeType);
 }
 

@@ -63,5 +63,8 @@
     <Text Include="simpleScene.txt">
       <Filter>Resource Files</Filter>
     </Text>
+    <Text Include="simpleSphere.txt">
+      <Filter>Resource Files</Filter>
+    </Text>
   </ItemGroup>
 </Project>

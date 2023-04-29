@@ -193,6 +193,7 @@ int main(int argc, char** argv) {
             op << glm::min(255, (int)floorf(pixelData[jj][ii].b)) << std::endl;
         }
     }
+    op.close();
 
     std::cout << "Export finished.\n";
 
