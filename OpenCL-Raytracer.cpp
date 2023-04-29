@@ -54,7 +54,8 @@ int main(int argc, char** argv) {
     std::vector<Light> lights;
 
     try {
-        SceneLoader::Load(sceneFileLoc, objects, lights);
+        SceneLoader loader;
+        loader.Load(sceneFileLoc, objects, lights);
     }
     catch (std::exception err) {
         std::cout << err.what() << std::endl;
@@ -86,8 +87,8 @@ int main(int argc, char** argv) {
 
             if (hitsRow[ii].time < MAX_FLOAT) {
                 //pixelData[jj][ii] = shadeHitTest(hitsRow[ii]);
-                pixelData[jj][ii] = shadeNormals(hitsRow[ii]);
-                //pixelData[jj][ii] = shadeAmbient(hitsRow[ii]);
+                //pixelData[jj][ii] = shadeNormals(hitsRow[ii]);
+                pixelData[jj][ii] = shadeAmbient(hitsRow[ii]);
                 //pixelData[jj][ii] = shade(hitsRow[ii], 30);
             }
         }

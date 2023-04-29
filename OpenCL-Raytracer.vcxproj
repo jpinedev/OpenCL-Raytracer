@@ -152,7 +152,7 @@
     <ClInclude Include="SceneLoader.hpp" />
   </ItemGroup>
   <ItemGroup>
-    <Text Include="simpleSphere.txt">
+    <Text Include="simpleScene.txt">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</DeploymentContent>
     </Text>
