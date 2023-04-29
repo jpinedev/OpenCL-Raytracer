@@ -141,6 +141,7 @@
     <ClCompile Include="SceneLoader.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="raycast_kernel.cl" />
     <None Include="vector_add_kernel.cl" />
   </ItemGroup>
   <ItemGroup>
@@ -148,6 +149,7 @@
     <ClInclude Include="Light.hpp" />
     <ClInclude Include="Material.hpp" />
     <ClInclude Include="ObjectData.hpp" />
+    <ClInclude Include="OpenCL-RaycastTask.hpp" />
     <ClInclude Include="Ray3D.hpp" />
     <ClInclude Include="SceneLoader.hpp" />
   </ItemGroup>

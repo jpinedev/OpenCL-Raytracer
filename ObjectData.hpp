@@ -14,8 +14,9 @@ public:
 public:
     ObjectData(PrimativeType type, Material& mat, glm::mat4 mv);
 
-    // void Serialize(void* dest);
-    // static Material Deserialize(void* src);
+    void Serialize(uint8_t*& dest) const;
+
+    static const size_t SERIALIZED_SIZE;
 
     void Raycast(Ray3D ray, HitRecord& hit);
 

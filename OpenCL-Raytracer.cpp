@@ -1,5 +1,6 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/string_cast.hpp>
 #include "Ray3D.hpp"
 #include "ObjectData.hpp"
 #include <chrono>
@@ -8,6 +9,7 @@
 #include <iostream>
 #include "Light.hpp"
 #include "SceneLoader.hpp"
+#include "OpenCL-RaycastTask.hpp"
 
 Ray3D screenSpaceToViewSpace(float width, float height, glm::vec2 pos, float angle) {
     float halfWidth = width / 2.0f;
@@ -139,14 +141,20 @@ int main(int argc, char** argv) {
 
     auto startTime = std::chrono::high_resolution_clock::now();
 
+    std::vector<Ray3D> rays;
     std::vector<std::vector<HitRecord> > rayHits(height);
     std::vector<std::vector<glm::vec3> > pixelData(height);
 
     for (int jj = 0; jj < height; ++jj) {
+        for (int ii = 0; ii < width; ++ii) {
+           rays.emplace_back(screenSpaceToViewSpace((float)width, (float)height, glm::vec2(ii, height - jj), fov));
+        }
+
         rayHits[jj].resize(width);
         pixelData[jj].resize(width);
     }
 
+    /*
     for (int jj = 0; jj < height; ++jj) {
         std::vector<HitRecord>& hitsRow = rayHits[jj];
         for (int ii = 0; ii < width; ++ii) {
@@ -160,6 +168,8 @@ int main(int argc, char** argv) {
             }
         }
     }
+    */
+    raycastRays(objects, rays, rayHits);
 
     auto endTime = std::chrono::high_resolution_clock::now();
 
@@ -176,6 +186,7 @@ int main(int argc, char** argv) {
     op << "255\n";
     for (int jj = 0; jj < height; ++jj) {
         for (int ii = 0; ii < width; ++ii) {
+            pixelData[jj][ii] = shadeHitTest(rayHits[jj][ii]);
             pixelData[jj][ii] *= 255.f;
             op << glm::min(255, (int)floorf(pixelData[jj][ii].r)) << " ";
             op << glm::min(255, (int)floorf(pixelData[jj][ii].g)) << " ";

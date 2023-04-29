@@ -32,6 +32,9 @@
     <None Include="vector_add_kernel.cl">
       <Filter>Source Files</Filter>
     </None>
+    <None Include="raycast_kernel.cl">
+      <Filter>Source Files</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ObjectData.hpp">
@@ -50,6 +53,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="SceneLoader.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="OpenCL-RaycastTask.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
