@@ -19,6 +19,13 @@ Ray3D screenSpaceToViewSpace(float width, float height, glm::vec2 pos, float ang
     return out;
 }
 
+bool raycast(std::vector<ObjectData>& objects, Ray3D& ray, HitRecord& hit) {
+    for (auto& obj : objects) {
+        obj.Raycast(ray, hit);
+    }
+    return (hit.time < MAX_FLOAT);
+}
+
 inline glm::vec3 shadeHitTest(HitRecord& hit) {
     return glm::vec3(1., 1., 1.);
 }
@@ -27,6 +34,70 @@ inline glm::vec3 shadeNormals(HitRecord& hit) {
 }
 inline glm::vec3 shadeAmbient(HitRecord& hit) {
     return hit.mat.ambient;
+}
+
+inline glm::vec3 componentWiseMultiply(const glm::vec3& lhs, const glm::vec3& rhs) {
+    return glm::vec3(lhs.x * rhs.x, lhs.y * rhs.y, lhs.z * rhs.z);
+}
+
+glm::vec3 shade(std::vector<Light>& lights, std::vector<ObjectData>& objects, HitRecord& hit) {
+    glm::vec3& fPosition = hit.intersection;
+    glm::vec3& fNormal = hit.normal;
+    glm::vec3 fColor(0.f, 0.f, 0.f);
+    glm::vec3 lightVec(0.f, 0.f, 0.f), viewVec(0.f, 0.f, 0.f), reflectVec(0.f, 0.f, 0.f);
+    glm::vec3 normalView(0.f, 0.f, 0.f);
+    glm::vec3 ambient(0.f, 0.f, 0.f), diffuse(0.f, 0.f, 0.f), specular(0.f, 0.f, 0.f);
+    float nDotL, rDotV;
+
+    glm::vec3 absorbColor(0.f, 0.f, 0.f), reflectColor(0.f, 0.f, 0.f), transparencyColor(0.f, 0.f, 0.f);
+
+    for (auto& light : lights) {
+        if (light.lightPosition.w != 0)
+            lightVec = glm::vec3(light.lightPosition) - fPosition;
+        else
+            lightVec = -glm::vec3(light.lightPosition);
+
+        // Shoot ray towards light source, any hit means shadow.
+        Ray3D rayToLight(fPosition, lightVec);
+        // Need 'skin' width to avoid hitting itself.
+        rayToLight.start += glm::vec4(0.01f * glm::normalize(glm::vec3(rayToLight.direction)), 0);
+        HitRecord shadowcastHit;
+
+        raycast(objects, rayToLight, shadowcastHit);
+
+        lightVec = glm::normalize(lightVec);
+
+        glm::vec3 tNormal = fNormal;
+        normalView = glm::normalize(tNormal);
+        nDotL = glm::dot(normalView, lightVec);
+
+        viewVec = -fPosition;
+        viewVec = glm::normalize(viewVec);
+
+        reflectVec = glm::reflect(-lightVec, normalView);
+        reflectVec = glm::normalize(reflectVec);
+
+        rDotV = glm::dot(reflectVec, viewVec);
+        rDotV = glm::max(rDotV, 0.0f);
+
+        ambient = componentWiseMultiply(hit.mat.ambient, light.ambient);
+        // Object cannot directly see the light
+        if (shadowcastHit.time >= 1.f || shadowcastHit.time < 0) {
+            diffuse = componentWiseMultiply(hit.mat.diffuse, light.diffuse) * glm::max(nDotL, 0.f);
+            if (nDotL > 0)
+                specular = componentWiseMultiply(hit.mat.specular, light.specular) *
+                glm::pow(rDotV, glm::max(hit.mat.shininess, 1.f));
+        }
+        else {
+            diffuse = { 0., 0., 0. };
+            specular = { 0., 0., 0. };
+        }
+        absorbColor = absorbColor + ambient + diffuse + specular;
+    }
+
+    fColor = absorbColor;
+
+    return fColor;
 }
 
 int main(int argc, char** argv) {
@@ -81,15 +152,11 @@ int main(int argc, char** argv) {
         for (int ii = 0; ii < width; ++ii) {
             Ray3D ray = screenSpaceToViewSpace((float)width, (float)height, glm::vec2(ii, height - jj), fov);
 
-            for (auto& obj : objects) {
-                obj.Raycast(ray, hitsRow[ii]);
-            }
-
-            if (hitsRow[ii].time < MAX_FLOAT) {
+            if (raycast(objects, ray, hitsRow[ii])) {
                 //pixelData[jj][ii] = shadeHitTest(hitsRow[ii]);
                 //pixelData[jj][ii] = shadeNormals(hitsRow[ii]);
-                pixelData[jj][ii] = shadeAmbient(hitsRow[ii]);
-                //pixelData[jj][ii] = shade(hitsRow[ii], 30);
+                //pixelData[jj][ii] = shadeAmbient(hitsRow[ii]);
+                pixelData[jj][ii] = shade(lights, objects, hitsRow[ii]);
             }
         }
     }
