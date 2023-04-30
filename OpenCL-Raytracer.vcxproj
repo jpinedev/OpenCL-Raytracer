@@ -135,7 +135,9 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="CPURaytracer.cpp" />
     <ClCompile Include="ObjectData.cpp" />
+    <ClCompile Include="OpenCLRaytracer.cpp" />
     <ClCompile Include="OpenCL-Raytracer.cpp" />
     <ClCompile Include="OpenCL-TaskDemo.hpp" />
     <ClCompile Include="SceneLoader.cpp" />
@@ -145,11 +147,13 @@
     <None Include="vector_add_kernel.cl" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="CPURaytracer.hpp" />
     <ClInclude Include="HitRecord.hpp" />
+    <ClInclude Include="IRaytracer.hpp" />
     <ClInclude Include="Light.hpp" />
     <ClInclude Include="Material.hpp" />
     <ClInclude Include="ObjectData.hpp" />
-    <ClInclude Include="OpenCL-RaycastTask.hpp" />
+    <ClInclude Include="OpenCLRaytracer.hpp" />
     <ClInclude Include="Ray3D.hpp" />
     <ClInclude Include="SceneLoader.hpp" />
   </ItemGroup>

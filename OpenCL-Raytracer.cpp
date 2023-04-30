@@ -9,7 +9,9 @@
 #include <iostream>
 #include "Light.hpp"
 #include "SceneLoader.hpp"
-#include "OpenCL-RaycastTask.hpp"
+#include "IRaytracer.hpp"
+#include "CPURaytracer.hpp"
+#include "OpenCLRaytracer.hpp"
 
 Ray3D screenSpaceToViewSpace(float width, float height, glm::vec2 pos, float angle) {
     float halfWidth = width / 2.0f;
@@ -19,13 +21,6 @@ Ray3D screenSpaceToViewSpace(float width, float height, glm::vec2 pos, float ang
     Ray3D out = Ray3D(glm::vec3(0, 0, 0), glm::vec3(pos.x - halfWidth, pos.y - halfHeight,
         -(halfHeight / tan(angle))));
     return out;
-}
-
-bool raycast(const std::vector<ObjectData>& objects, const Ray3D& ray, HitRecord& hit) {
-    for (auto& obj : objects) {
-        obj.Raycast(ray, hit);
-    }
-    return (hit.time < MAX_FLOAT);
 }
 
 inline glm::vec3 shadeHitTest(HitRecord& hit) {
@@ -42,6 +37,7 @@ inline glm::vec3 componentWiseMultiply(const glm::vec3& lhs, const glm::vec3& rh
     return glm::vec3(lhs.x * rhs.x, lhs.y * rhs.y, lhs.z * rhs.z);
 }
 
+/*
 glm::vec3 shade(const std::vector<Light>& lights, const std::vector<ObjectData>& objects, const HitRecord& hit) {
     const glm::vec3& fPosition = hit.intersection;
     const glm::vec3& fNormal = hit.normal;
@@ -101,13 +97,7 @@ glm::vec3 shade(const std::vector<Light>& lights, const std::vector<ObjectData>&
 
     return fColor;
 }
-
-int raytraceCPU(const vector<ObjectData>& objects, const vector<Ray3D>& rays, vector<HitRecord>& hits) {
-    for (int ii = 0; ii < rays.size(); ++ii) {
-        raycast(objects, rays[ii], hits[ii]);
-    }
-    return 0;
-}
+*/
 
 int main(int argc, char** argv) {
     // TODO: add flags for setting these vars
@@ -142,9 +132,6 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-
-    auto startTime = std::chrono::high_resolution_clock::now();
-
     std::vector<Ray3D> rays;
     std::vector<HitRecord> rayHits(height * width);
     std::vector<glm::vec3> pixelData(height * width);
@@ -155,12 +142,16 @@ int main(int argc, char** argv) {
         }
     }
 
+    //IRaytracer* raytracer = (IRaytracer*)new CPURaytracer();
+    IRaytracer* raytracer = (IRaytracer*)new OpenCLRaytracer();
+
     std::cout << "Scene file loaded without any errors.\n";
 
     std::cout << "Rendering...\n";
 
-    //raytraceCPU(objects, rays, rayHits);
-    raytraceGPU(objects, rays, rayHits);
+    auto startTime = std::chrono::high_resolution_clock::now();
+
+    raytracer->Raytrace(objects, rays, rayHits);
 
     auto endTime = std::chrono::high_resolution_clock::now();
 

@@ -1,72 +1,11 @@
-#ifndef __RAYCAST_TASK__
-#define __RAYCAST_TASK__
+#include "OpenCLRaytracer.hpp"
 
-#include <vector>
-#include <stdio.h>
-#include <stdlib.h>
-
-#ifdef __APPLE__
-#include <OpenCL/opencl.h>
-#else
-#include <CL/cl.h>
-#endif
-
-#include "ObjectData.hpp"
-
-#define MAX_SOURCE_SIZE (0x100000)
+#include <iostream>
 
 using namespace std;
 
-
-inline void cpyVec3ToFloat3(cl_float3* dest, const glm::vec3& src) {
-    *dest = { src.x, src.y, src.z };
-}
-
-typedef struct cl_Ray {
-    cl_float3 start, direction;
-
-    cl_Ray() : start({0, 0, 0}), direction({0,0,0}) { }
-    cl_Ray(const Ray3D& cpy) {
-        cpyVec3ToFloat3(&start, cpy.start);
-        cpyVec3ToFloat3(&direction, cpy.direction);
-    }
-} cl_Ray;
-
-typedef struct cl_Material {
-    cl_float3 ambient, diffuse, specular;
-    cl_float absorption, reflection, transparency;
-    cl_float shininess;
-
-    cl_Material() : ambient({0., 0., 0.}), diffuse(ambient), specular(ambient), absorption(1), reflection(0), transparency(0), shininess(1) { }
-    cl_Material(const Material& cpy) : absorption(cpy.absorption), reflection(cpy.reflection), transparency(cpy.transparency), shininess(cpy.shininess) {
-        cpyVec3ToFloat3(&ambient, cpy.ambient);
-        cpyVec3ToFloat3(&diffuse, cpy.diffuse);
-        cpyVec3ToFloat3(&specular, cpy.specular);
-    }
-} cl_Material;
-
-inline void cpyMat4ToFloat16(cl_float16* dest, const glm::mat4& src) {
-    const float* m = glm::value_ptr(src);
-    *dest = { m[0], m[1], m[2], m[3], m[4], m[5], m[6], m[7], m[8], m[9], m[10], m[11], m[12], m[13], m[14], m[15] };
-}
-
-typedef struct cl_ObjectData {
-    cl_Material mat;
-    cl_float16 mv, mvInverse, mvInverseTranspose;
-    cl_uint type;
-    // Necessary for alignment on vram (for my drivers)
-    uint8_t spacer[60];
-
-    cl_ObjectData() : mv({ 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1 }), mvInverse(mv), mvInverseTranspose(mv), type(0) { }
-    cl_ObjectData(const ObjectData& cpy) : mat(cpy.mat) {
-        cpyMat4ToFloat16(&mv, cpy.mv);
-        cpyMat4ToFloat16(&mvInverse, cpy.mvInverse);
-        cpyMat4ToFloat16(&mvInverseTranspose, cpy.mvInverseTranspose);
-        type = (cl_uint)cpy.type;
-    }
-} cl_ObjectData;
-
-static int raytraceGPU(const vector<ObjectData>& objects, const vector<Ray3D>& rays, vector<HitRecord>& hits) {
+int OpenCLRaytracer::Raytrace(const vector<ObjectData>& objects, const vector<Ray3D>& rays, vector<HitRecord>& hits)
+{
     const size_t OBJECT_COUNT = objects.size();
     cl_ObjectData* objArr = new cl_ObjectData[OBJECT_COUNT];
 
@@ -140,11 +79,11 @@ static int raytraceGPU(const vector<ObjectData>& objects, const vector<Ray3D>& r
     cl_build_status status;
     ret = clGetProgramBuildInfo(program, device_id, CL_PROGRAM_BUILD_STATUS, sizeof(cl_build_status), &status, NULL);
     if (ret != 0 || status != CL_BUILD_SUCCESS) {
-        std::cout << ret << endl;
+        cout << ret << endl;
 
         size_t s;
         ret = clGetProgramBuildInfo(program, device_id, CL_PROGRAM_BUILD_LOG, MAX_SOURCE_SIZE, source_str, &s);
-        std::cout << source_str;
+        cout << source_str;
         throw;
     }
 
@@ -188,4 +127,32 @@ static int raytraceGPU(const vector<ObjectData>& objects, const vector<Ray3D>& r
     return 0;
 }
 
-#endif
+
+inline void cpyVec3ToFloat3(cl_float3* dest, const glm::vec3& src) {
+    *dest = { src.x, src.y, src.z };
+}
+inline void cpyMat4ToFloat16(cl_float16* dest, const glm::mat4& src) {
+    const float* m = glm::value_ptr(src);
+    *dest = { m[0], m[1], m[2], m[3], m[4], m[5], m[6], m[7], m[8], m[9], m[10], m[11], m[12], m[13], m[14], m[15] };
+}
+
+OpenCLRaytracer::cl_Ray::cl_Ray() : start({ 0, 0, 0 }), direction({ 0,0,0 }) { }
+OpenCLRaytracer::cl_Ray::cl_Ray(const Ray3D& cpy) {
+    cpyVec3ToFloat3(&start, cpy.start);
+    cpyVec3ToFloat3(&direction, cpy.direction);
+}
+
+OpenCLRaytracer::cl_Material::cl_Material() : ambient({ 0., 0., 0. }), diffuse(ambient), specular(ambient), absorption(1), reflection(0), transparency(0), shininess(1) { }
+OpenCLRaytracer::cl_Material::cl_Material(const Material& cpy) : absorption(cpy.absorption), reflection(cpy.reflection), transparency(cpy.transparency), shininess(cpy.shininess) {
+    cpyVec3ToFloat3(&ambient, cpy.ambient);
+    cpyVec3ToFloat3(&diffuse, cpy.diffuse);
+    cpyVec3ToFloat3(&specular, cpy.specular);
+}
+
+OpenCLRaytracer::cl_ObjectData::cl_ObjectData() : mv({ 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1 }), mvInverse(mv), mvInverseTranspose(mv), type(0) { }
+OpenCLRaytracer::cl_ObjectData::cl_ObjectData(const ObjectData& cpy) : mat(cpy.mat) {
+    cpyMat4ToFloat16(&mv, cpy.mv);
+    cpyMat4ToFloat16(&mvInverse, cpy.mvInverse);
+    cpyMat4ToFloat16(&mvInverseTranspose, cpy.mvInverseTranspose);
+    type = (cl_uint)cpy.type;
+}
