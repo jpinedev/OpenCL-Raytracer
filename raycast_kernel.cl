@@ -1,39 +1,56 @@
-__kernel void raycast(const ulong sizeOfObj, const ulong count, __global const uchar* objs, __global const float3* rays, __global uchar* hits) {
+typedef struct Ray {
+    float3 start;
+    float3 direction;
+} Ray;
+
+/*
+typedef struct Material {
+    float3 ambient, diffuse, specular;
+    float absorption, reflection, transparency;
+    float shininess;
+} Material;
+*/
+
+typedef struct ObjectData {
+    // Material mat;
+    float16 mv, mvInverse, mvInverseTranspose;
+    uint type;
+} ObjectData;
+
+__kernel void raycast(const ulong count, __global const ObjectData* objs, __global const Ray* rays, __global uchar* hits) {
     // Get the index of the current element to be processed
     int i = get_global_id(0);
 
-    const float3* ray = rays + i * 2;
-
-    float3 rayStart, rayDir;
+    Ray ray;
 
     // Do the operation
 
     for (int objIndex = 0; objIndex < count; ++objIndex) {
-        const unsigned char* obj = objs + objIndex * sizeOfObj;
-        float* mvInverse = (float*)(obj + 52U + 1);
+        const ObjectData obj = objs[objIndex];
 
-        rayStart.x = mvInverse[0] * ray[0].x + mvInverse[4] * ray[0].y + mvInverse[8] * ray[0].z + mvInverse[12] * 1.f;
-        rayStart.y = mvInverse[1] * ray[0].x + mvInverse[5] * ray[0].y + mvInverse[9] * ray[0].z + mvInverse[13] * 1.f;
-        rayStart.z = mvInverse[2] * ray[0].x + mvInverse[6] * ray[0].y + mvInverse[10] * ray[0].z + mvInverse[14] * 1.f;
+        ray.start.x = obj.mvInverse.s0 * rays[i].start.x + obj.mvInverse.s4 * rays[i].start.y + obj.mvInverse.s8 * rays[i].start.z + obj.mvInverse.sC * 1.f;
+        ray.start.y = obj.mvInverse.s1 * rays[i].start.x + obj.mvInverse.s5 * rays[i].start.y + obj.mvInverse.s9 * rays[i].start.z + obj.mvInverse.sD * 1.f;
+        ray.start.z = obj.mvInverse.s2 * rays[i].start.x + obj.mvInverse.s6 * rays[i].start.y + obj.mvInverse.sA * rays[i].start.z + obj.mvInverse.sE * 1.f;
 
-        rayDir.x = mvInverse[0] * ray[1].x + mvInverse[4] * ray[1].y + mvInverse[8] * ray[1].z;
-        rayDir.y = mvInverse[1] * ray[1].x + mvInverse[5] * ray[1].y + mvInverse[9] * ray[1].z;
-        rayDir.z = mvInverse[2] * ray[1].x + mvInverse[6] * ray[1].y + mvInverse[10] * ray[1].z;
+        ray.direction.x = obj.mvInverse.s0 * rays[i].direction.x + obj.mvInverse.s4 * rays[i].direction.y + obj.mvInverse.s8 * rays[i].direction.z;
+        ray.direction.y = obj.mvInverse.s1 * rays[i].direction.x + obj.mvInverse.s5 * rays[i].direction.y + obj.mvInverse.s9 * rays[i].direction.z;
+        ray.direction.z = obj.mvInverse.s2 * rays[i].direction.x + obj.mvInverse.s6 * rays[i].direction.y + obj.mvInverse.sA * rays[i].direction.z;
 
-        switch (*(obj + 52U + 3 * 4U * 16U)) {
+        switch (obj.type) {
         case 0: // Sphere
         {
             // Solve quadratic
-            float A = rayDir.x * rayDir.x +
-                rayDir.y * rayDir.y +
-                rayDir.z * rayDir.z;
+            float A = ray.direction.x * ray.direction.x +
+                ray.direction.y * ray.direction.y +
+                ray.direction.z * ray.direction.z;
             float B = 2.f *
-                (rayDir.x * rayStart.x + rayDir.y * rayStart.y +
-                    rayDir.z * rayStart.z);
-            float C = rayStart.x * rayStart.x + rayStart.y * rayStart.y +
-                rayStart.z * rayStart.z - 1.f;
+                (ray.direction.x * ray.start.x + ray.direction.y * ray.start.y +
+                    ray.direction.z * ray.start.z);
+            float C = ray.start.x * ray.start.x + ray.start.y * ray.start.y +
+                ray.start.z * ray.start.z - 1.f;
 
             float radical = B * B - 4.f * A * C;
+
             // no intersection
             if (radical < 0) continue;
 
@@ -42,12 +59,12 @@ __kernel void raycast(const ulong sizeOfObj, const ulong count, __global const u
             float t1 = (-B - root) / (2.f * A);
             float t2 = (-B + root) / (2.f * A);
 
-            float tMin = (t1 >= 0 && t2 >= 0) ? min(t1, t2) : max(t1, t2);
+            float tMin = (t1 >= 0 && t2 >= 0) ? fmin(t1, t2) : fmax(t1, t2);
             // object is fully behind camera
             if (tMin < 0) continue;
 
-            hits[i] = 1;
-            break;
+            hits[i] = objIndex + 1;
+            continue;
         }
 
         case 1: // Box

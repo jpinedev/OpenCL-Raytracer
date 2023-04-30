@@ -17,26 +17,58 @@
 
 using namespace std;
 
+
+inline void cpyVec3ToFloat3(cl_float3* dest, const glm::vec3& src) {
+    *dest = { src.x, src.y, src.z };
+}
+
+typedef struct cl_Ray {
+    cl_float3 start, direction;
+
+    cl_Ray() : start({0, 0, 0}), direction({0,0,0}) { }
+    cl_Ray(const Ray3D& cpy) {
+        cpyVec3ToFloat3(&start, cpy.start);
+        cpyVec3ToFloat3(&direction, cpy.direction);
+    }
+} cl_Ray;
+
+inline void cpyMat4ToFloat16(cl_float16* dest, const glm::mat4& src) {
+    const float* m = glm::value_ptr(src);
+    *dest = { m[0], m[1], m[2], m[3], m[4], m[5], m[6], m[7], m[8], m[9], m[10], m[11], m[12], m[13], m[14], m[15] };
+}
+
+typedef struct cl_ObjectData {
+    // cl_Material mat;
+    cl_float16 mv, mvInverse, mvInverseTranspose;
+    cl_uint type;
+
+    cl_ObjectData() : mv({ 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1 }), mvInverse(mv), mvInverseTranspose(mv), type(0) { }
+    cl_ObjectData(const ObjectData& cpy) {
+        cpyMat4ToFloat16(&mv, cpy.mv);
+        cpyMat4ToFloat16(&mvInverse, cpy.mvInverse);
+        cpyMat4ToFloat16(&mvInverseTranspose, cpy.mvInverseTranspose);
+        type = (cl_uint)cpy.type;
+    }
+} cl_ObjectData;
+
 static int raycastRays(const vector<ObjectData>& objects, const vector<Ray3D>& rays, vector<vector<HitRecord> >& hits) {
     const size_t OBJECT_COUNT = objects.size();
-    uint8_t* objArr = new uint8_t[OBJECT_COUNT * ObjectData::SERIALIZED_SIZE];
-    uint8_t* currObj = objArr;
+    cl_ObjectData* objArr = new cl_ObjectData[OBJECT_COUNT];
 
     for (int i = 0; i < OBJECT_COUNT; i++) {
-        objects[i].Serialize(currObj);
+        objArr[i] = cl_ObjectData(objects[i]);
     }
 
     const size_t RAYCAST_COUNT = rays.size();
 
-    const size_t RAY_LIST_SIZE = RAYCAST_COUNT * 6;
-    float* rayArr = new float[RAYCAST_COUNT * 6];
+    const size_t RAY_LIST_SIZE = RAYCAST_COUNT;
+    cl_Ray* rayArr = new cl_Ray[RAYCAST_COUNT];
 
     const size_t HITTEST_LIST_SIZE = RAYCAST_COUNT * sizeof(uint8_t);
     uint8_t* hitTestArr = new uint8_t[RAYCAST_COUNT];
 
     for (int i = 0; i < RAYCAST_COUNT; i++) {
-        memcpy(rayArr + i * 6, glm::value_ptr(rays[i].start), 3 * sizeof(float));
-        memcpy(rayArr + i * 6 + 3, glm::value_ptr(rays[i].direction), 3 * sizeof(float));
+        rayArr[i] = cl_Ray(rays[i]);
 
         hitTestArr[i] = 0;
     }
@@ -72,17 +104,17 @@ static int raycastRays(const vector<ObjectData>& objects, const vector<Ray3D>& r
 
     // Create memory buffers on the device for each vector 
     cl_mem objs_mem_obj = clCreateBuffer(context, CL_MEM_READ_ONLY,
-        OBJECT_COUNT * ObjectData::SERIALIZED_SIZE, NULL, &ret);
+        OBJECT_COUNT * sizeof(cl_ObjectData), NULL, &ret);
     cl_mem rays_mem_obj = clCreateBuffer(context, CL_MEM_READ_ONLY,
-        RAY_LIST_SIZE * sizeof(float), NULL, &ret);
-    cl_mem hits_mem_obj = clCreateBuffer(context, CL_MEM_READ_ONLY,
+        RAY_LIST_SIZE * sizeof(cl_Ray), NULL, &ret);
+    cl_mem hits_mem_obj = clCreateBuffer(context, CL_MEM_WRITE_ONLY,
         HITTEST_LIST_SIZE * sizeof(uint8_t), NULL, &ret);
 
     // Copy the lists A and B to their respective memory buffers
     ret = clEnqueueWriteBuffer(command_queue, objs_mem_obj, CL_TRUE, 0,
-        OBJECT_COUNT * ObjectData::SERIALIZED_SIZE, objArr, 0, NULL, NULL);
+        OBJECT_COUNT * sizeof(cl_ObjectData), objArr, 0, NULL, NULL);
     ret = clEnqueueWriteBuffer(command_queue, rays_mem_obj, CL_TRUE, 0,
-        RAY_LIST_SIZE * sizeof(float), rayArr, 0, NULL, NULL);
+        RAY_LIST_SIZE * sizeof(cl_Ray), rayArr, 0, NULL, NULL);
     ret = clEnqueueWriteBuffer(command_queue, hits_mem_obj, CL_TRUE, 0,
         HITTEST_LIST_SIZE * sizeof(uint8_t), hitTestArr, 0, NULL, NULL);
 
@@ -100,17 +132,17 @@ static int raycastRays(const vector<ObjectData>& objects, const vector<Ray3D>& r
         size_t s;
         ret = clGetProgramBuildInfo(program, device_id, CL_PROGRAM_BUILD_LOG, MAX_SOURCE_SIZE, source_str, &s);
         std::cout << source_str;
+        throw;
     }
 
     // Create the OpenCL kernel
     cl_kernel kernel = clCreateKernel(program, "raycast", &ret);
 
     // Set the arguments of the kernel
-    ret = clSetKernelArg(kernel, 0, sizeof(size_t), &ObjectData::SERIALIZED_SIZE);
-    ret = clSetKernelArg(kernel, 1, sizeof(size_t), &OBJECT_COUNT);
-    ret = clSetKernelArg(kernel, 2, sizeof(cl_mem), (void*)&objs_mem_obj);
-    ret = clSetKernelArg(kernel, 3, sizeof(cl_mem), (void*)&rays_mem_obj);
-    ret = clSetKernelArg(kernel, 4, sizeof(cl_mem), (void*)&hits_mem_obj);
+    ret = clSetKernelArg(kernel, 0, sizeof(size_t), &OBJECT_COUNT);
+    ret = clSetKernelArg(kernel, 1, sizeof(cl_mem), (void*)&objs_mem_obj);
+    ret = clSetKernelArg(kernel, 2, sizeof(cl_mem), (void*)&rays_mem_obj);
+    ret = clSetKernelArg(kernel, 3, sizeof(cl_mem), (void*)&hits_mem_obj);
 
     // Execute the OpenCL kernel on the list
     size_t global_item_size = RAYCAST_COUNT; // Process the entire lists

@@ -20,11 +20,11 @@ public:
 
     void Raycast(Ray3D ray, HitRecord& hit);
 
-private:
     Material mat;
     glm::mat4 mv, mvInverse, mvInverseTranspose;
     PrimativeType type;
 
+private:
     inline void RaycastSphere(Ray3D& ray, HitRecord& hit);
     inline void RaycastBox(Ray3D& ray, HitRecord& hit);
 };
