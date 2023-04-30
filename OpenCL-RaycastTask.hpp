@@ -32,19 +32,33 @@ typedef struct cl_Ray {
     }
 } cl_Ray;
 
+typedef struct cl_Material {
+    cl_float3 ambient, diffuse, specular;
+    cl_float absorption, reflection, transparency;
+    cl_float shininess;
+
+    cl_Material() : ambient({0., 0., 0.}), diffuse(ambient), specular(ambient), absorption(1), reflection(0), transparency(0), shininess(1) { }
+    cl_Material(const Material& cpy) : absorption(cpy.absorption), reflection(cpy.reflection), transparency(cpy.transparency), shininess(cpy.shininess) {
+        cpyVec3ToFloat3(&ambient, cpy.ambient);
+        cpyVec3ToFloat3(&diffuse, cpy.diffuse);
+        cpyVec3ToFloat3(&specular, cpy.specular);
+    }
+} cl_Material;
+
 inline void cpyMat4ToFloat16(cl_float16* dest, const glm::mat4& src) {
     const float* m = glm::value_ptr(src);
     *dest = { m[0], m[1], m[2], m[3], m[4], m[5], m[6], m[7], m[8], m[9], m[10], m[11], m[12], m[13], m[14], m[15] };
 }
 
 typedef struct cl_ObjectData {
-    // cl_Material mat;
+    cl_Material mat;
     cl_float16 mv, mvInverse, mvInverseTranspose;
     cl_uint type;
+    // Necessary for alignment on vram (for my drivers)
     uint8_t spacer[60];
 
     cl_ObjectData() : mv({ 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1 }), mvInverse(mv), mvInverseTranspose(mv), type(0) { }
-    cl_ObjectData(const ObjectData& cpy) {
+    cl_ObjectData(const ObjectData& cpy) : mat(cpy.mat) {
         cpyMat4ToFloat16(&mv, cpy.mv);
         cpyMat4ToFloat16(&mvInverse, cpy.mvInverse);
         cpyMat4ToFloat16(&mvInverseTranspose, cpy.mvInverseTranspose);
@@ -145,7 +159,7 @@ static int raycastRays(const vector<ObjectData>& objects, const vector<Ray3D>& r
 
     // Execute the OpenCL kernel on the list
     size_t global_item_size = RAYCAST_COUNT; // Process the entire lists
-    size_t local_item_size = 64; // Divide work items into groups of 64
+    size_t local_item_size = 32; // Divide work items into groups of 64
     ret = clEnqueueNDRangeKernel(command_queue, kernel, 1, NULL,
         &global_item_size, &local_item_size, 0, NULL, NULL);
 
@@ -155,7 +169,7 @@ static int raycastRays(const vector<ObjectData>& objects, const vector<Ray3D>& r
 
     for (int i = 0; i < RAYCAST_COUNT; i++) {
         if (hitTestArr[i] > 0U)
-            hits[i / hits.size()][i % hits.size()].time = 1.f;
+            hits[i / hits.size()][i % hits.size()].time = hitTestArr[i];
     }
 
     // Clean up

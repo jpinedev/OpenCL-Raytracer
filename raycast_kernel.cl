@@ -3,16 +3,14 @@ typedef struct Ray {
     float3 direction;
 } Ray;
 
-/*
 typedef struct Material {
     float3 ambient, diffuse, specular;
     float absorption, reflection, transparency;
     float shininess;
 } Material;
-*/
 
 typedef struct ObjectData {
-    // Material mat;
+    Material mat;
     float16 mv, mvInverse, mvInverseTranspose;
     uint type;
 } ObjectData;

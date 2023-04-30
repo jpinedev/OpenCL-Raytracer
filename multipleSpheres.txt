@@ -9,13 +9,10 @@ light globalLight
   specular 1 1 1
 
 ===
+primative sphere lightingTest
 translate 4 2 0
   scale 2 3 1
     primative sphere lightingTest
-primative sphere lightingTest
-#translate 6 4 0
-#  scale 3 3 3
-#    primative sphere lightingTest
 translate -3 -4 0
   scale 2 2 2
     primative sphere lightingTest

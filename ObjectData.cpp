@@ -8,23 +8,6 @@ ObjectData::ObjectData(PrimativeType type, Material& mat, glm::mat4 mv) :
     mvInverseTranspose(glm::transpose(mvInverse)),
     type(type) { }
 
-void ObjectData::Serialize(uint8_t*& dest) const
-{
-    mat.Serialize(dest);
-
-    memcpy(dest, glm::value_ptr(mv), 16 * sizeof(float));
-    dest += 16 * sizeof(float);
-    memcpy(dest, glm::value_ptr(mvInverse), 16 * sizeof(float));
-    dest += 16 * sizeof(float);
-    memcpy(dest, glm::value_ptr(mvInverseTranspose), 16 * sizeof(float));
-    dest += 16 * sizeof(float);
-
-    memcpy(dest, &type, sizeof(PrimativeType));
-    dest += sizeof(PrimativeType);
-}
-
-const size_t ObjectData::SERIALIZED_SIZE = sizeof(Material) + 3 * 16 * sizeof(float) + sizeof(PrimativeType);
-
 
 void ObjectData::Raycast(Ray3D ray, HitRecord& hit) {
     ray.start = mvInverse * ray.start;
