@@ -21,7 +21,7 @@ Ray3D screenSpaceToViewSpace(float width, float height, glm::vec2 pos, float ang
     return out;
 }
 
-bool raycast(std::vector<ObjectData>& objects, Ray3D& ray, HitRecord& hit) {
+bool raycast(const std::vector<ObjectData>& objects, const Ray3D& ray, HitRecord& hit) {
     for (auto& obj : objects) {
         obj.Raycast(ray, hit);
     }
@@ -42,9 +42,9 @@ inline glm::vec3 componentWiseMultiply(const glm::vec3& lhs, const glm::vec3& rh
     return glm::vec3(lhs.x * rhs.x, lhs.y * rhs.y, lhs.z * rhs.z);
 }
 
-glm::vec3 shade(std::vector<Light>& lights, std::vector<ObjectData>& objects, HitRecord& hit) {
-    glm::vec3& fPosition = hit.intersection;
-    glm::vec3& fNormal = hit.normal;
+glm::vec3 shade(const std::vector<Light>& lights, const std::vector<ObjectData>& objects, const HitRecord& hit) {
+    const glm::vec3& fPosition = hit.intersection;
+    const glm::vec3& fNormal = hit.normal;
     glm::vec3 fColor(0.f, 0.f, 0.f);
     glm::vec3 lightVec(0.f, 0.f, 0.f), viewVec(0.f, 0.f, 0.f), reflectVec(0.f, 0.f, 0.f);
     glm::vec3 normalView(0.f, 0.f, 0.f);
@@ -102,6 +102,13 @@ glm::vec3 shade(std::vector<Light>& lights, std::vector<ObjectData>& objects, Hi
     return fColor;
 }
 
+int raytraceCPU(const vector<ObjectData>& objects, const vector<Ray3D>& rays, vector<HitRecord>& hits) {
+    for (int ii = 0; ii < rays.size(); ++ii) {
+        raycast(objects, rays[ii], hits[ii]);
+    }
+    return 0;
+}
+
 int main(int argc, char** argv) {
     // TODO: add flags for setting these vars
     int width = 800, height = 800;
@@ -135,41 +142,25 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    std::cout << "Scene file loaded without any errors.\n";
-
-    std::cout << "Rendering...\n";
 
     auto startTime = std::chrono::high_resolution_clock::now();
 
     std::vector<Ray3D> rays;
-    std::vector<std::vector<HitRecord> > rayHits(height);
-    std::vector<std::vector<glm::vec3> > pixelData(height);
+    std::vector<HitRecord> rayHits(height * width);
+    std::vector<glm::vec3> pixelData(height * width);
 
     for (int jj = 0; jj < height; ++jj) {
         for (int ii = 0; ii < width; ++ii) {
             rays.emplace_back(screenSpaceToViewSpace((float)width, (float)height, glm::vec2(ii, height - jj), fov));
         }
-
-        rayHits[jj].resize(width);
-        pixelData[jj].resize(width);
     }
 
-    /*
-    for (int jj = 0; jj < height; ++jj) {
-        std::vector<HitRecord>& hitsRow = rayHits[jj];
-        for (int ii = 0; ii < width; ++ii) {
-            Ray3D ray = screenSpaceToViewSpace((float)width, (float)height, glm::vec2(ii, height - jj), fov);
+    std::cout << "Scene file loaded without any errors.\n";
 
-            if (raycast(objects, ray, hitsRow[ii])) {
-                //pixelData[jj][ii] = shadeHitTest(hitsRow[ii]);
-                //pixelData[jj][ii] = shadeNormals(hitsRow[ii]);
-                //pixelData[jj][ii] = shadeAmbient(hitsRow[ii]);
-                pixelData[jj][ii] = shade(lights, objects, hitsRow[ii]);
-            }
-        }
-    }
-    */
-    raycastRays(objects, rays, rayHits);
+    std::cout << "Rendering...\n";
+
+    //raytraceCPU(objects, rays, rayHits);
+    raytraceGPU(objects, rays, rayHits);
 
     auto endTime = std::chrono::high_resolution_clock::now();
 
@@ -184,14 +175,18 @@ int main(int argc, char** argv) {
     op << "P3" << "\n";
     op << width << " " << height << "\n";
     op << "255\n";
-    for (int jj = 0; jj < height; ++jj) {
-        for (int ii = 0; ii < width; ++ii) {
-            if (rayHits[jj][ii].time < MAX_FLOAT) pixelData[jj][ii] = shadeHitTest(rayHits[jj][ii]);
-            pixelData[jj][ii] *= 255.f;
-            op << glm::min(255, (int)floorf(pixelData[jj][ii].r)) << " ";
-            op << glm::min(255, (int)floorf(pixelData[jj][ii].g)) << " ";
-            op << glm::min(255, (int)floorf(pixelData[jj][ii].b)) << std::endl;
+    for (int ii = 0; ii < height * width; ++ii) {
+        if (rayHits[ii].time < MAX_FLOAT) {
+            pixelData[ii] = shadeHitTest(rayHits[ii]);
+            //pixelData[ii] = shadeNormals(rayHits[ii]);
+            //pixelData[ii] = shadeAmbient(rayHits[ii]);
+            //pixelData[ii] = shade(lights, objects, rayHits[ii]);
+
+            pixelData[ii] *= 255.f;
         }
+        op << glm::min(255, (int)floorf(pixelData[ii].r)) << " ";
+        op << glm::min(255, (int)floorf(pixelData[ii].g)) << " ";
+        op << glm::min(255, (int)floorf(pixelData[ii].b)) << std::endl;
     }
     op.close();
 

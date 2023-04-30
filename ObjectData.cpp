@@ -9,7 +9,7 @@ ObjectData::ObjectData(PrimativeType type, Material& mat, glm::mat4 mv) :
     type(type) { }
 
 
-void ObjectData::Raycast(Ray3D ray, HitRecord& hit) {
+void ObjectData::Raycast(Ray3D ray, HitRecord& hit) const {
     ray.start = mvInverse * ray.start;
     ray.direction = mvInverse * ray.direction;
 
@@ -23,7 +23,7 @@ void ObjectData::Raycast(Ray3D ray, HitRecord& hit) {
     }
 }
 
-inline void ObjectData::RaycastSphere(Ray3D& ray, HitRecord& hit) {
+inline void ObjectData::RaycastSphere(Ray3D& ray, HitRecord& hit) const {
     // Solve quadratic
     float A = ray.direction.x * ray.direction.x +
         ray.direction.y * ray.direction.y +
@@ -87,7 +87,7 @@ bool intersectsWidthBoxSide(float& tMin, float& tMax, float start, float dir) {
     return true;
 }
 
-inline void ObjectData::RaycastBox(Ray3D& ray, HitRecord& hit) {
+inline void ObjectData::RaycastBox(Ray3D& ray, HitRecord& hit) const {
     float txMin, txMax, tyMin, tyMax, tzMin, tzMax;
 
     if (!intersectsWidthBoxSide(txMin, txMax, ray.start.x, ray.direction.x))

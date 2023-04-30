@@ -66,7 +66,7 @@ typedef struct cl_ObjectData {
     }
 } cl_ObjectData;
 
-static int raycastRays(const vector<ObjectData>& objects, const vector<Ray3D>& rays, vector<vector<HitRecord> >& hits) {
+static int raytraceGPU(const vector<ObjectData>& objects, const vector<Ray3D>& rays, vector<HitRecord>& hits) {
     const size_t OBJECT_COUNT = objects.size();
     cl_ObjectData* objArr = new cl_ObjectData[OBJECT_COUNT];
 
@@ -167,9 +167,9 @@ static int raycastRays(const vector<ObjectData>& objects, const vector<Ray3D>& r
     ret = clEnqueueReadBuffer(command_queue, hits_mem_obj, CL_TRUE, 0,
         RAYCAST_COUNT * sizeof(float), hitTestArr, 0, NULL, NULL);
 
-    for (int i = 0; i < RAYCAST_COUNT; i++) {
-        if (hitTestArr[i] > 0U)
-            hits[i / hits.size()][i % hits.size()].time = hitTestArr[i];
+    for (int ii = 0; ii < RAYCAST_COUNT; ii++) {
+        if (hitTestArr[ii] > 0U)
+            hits[ii].time = hitTestArr[ii];
     }
 
     // Clean up

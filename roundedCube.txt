@@ -1,0 +1,34 @@
+material lightingTest
+  ambient 1 0 0
+  diffuse 0 1 0
+  specular 0 0 1
+
+light globalLight
+  ambient .3 .3 .3
+  diffuse .7 .7 .7
+  specular 1 1 1
+
+===
+rotate 45 1 1 1
+  scale 4 4 4
+    primative box lightingTest
+
+  translate 2 2 2
+    primative sphere lightingTest
+  translate -2 2 2
+    primative sphere lightingTest
+  translate 2 2 -2
+    primative sphere lightingTest
+  translate -2 2 -2
+    primative sphere lightingTest
+  translate 2 -2 2
+    primative sphere lightingTest
+  translate -2 -2 2
+    primative sphere lightingTest
+  translate 2 -2 -2
+    primative sphere lightingTest
+  translate -2 -2 -2
+    primative sphere lightingTest
+
+translate 10 10 10
+  light globalLight
