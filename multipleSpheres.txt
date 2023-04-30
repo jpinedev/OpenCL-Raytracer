@@ -16,8 +16,8 @@ primative sphere lightingTest
 #translate 6 4 0
 #  scale 3 3 3
 #    primative sphere lightingTest
-#translate -3 -4 0
-#  scale 2 2 2
-#    primative sphere lightingTest
+translate -3 -4 0
+  scale 2 2 2
+    primative sphere lightingTest
 translate 10 10 10
   light globalLight

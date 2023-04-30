@@ -147,7 +147,7 @@ int main(int argc, char** argv) {
 
     for (int jj = 0; jj < height; ++jj) {
         for (int ii = 0; ii < width; ++ii) {
-           rays.emplace_back(screenSpaceToViewSpace((float)width, (float)height, glm::vec2(ii, height - jj), fov));
+            rays.emplace_back(screenSpaceToViewSpace((float)width, (float)height, glm::vec2(ii, height - jj), fov));
         }
 
         rayHits[jj].resize(width);

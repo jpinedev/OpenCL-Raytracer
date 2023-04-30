@@ -17,26 +17,27 @@ typedef struct ObjectData {
     uint type;
 } ObjectData;
 
-__kernel void raycast(const ulong count, __global const ObjectData* objs, __global const Ray* rays, __global uchar* hits) {
+__kernel void raycast(const ulong count, __global const ObjectData* objs, __global const Ray* rays, __global float* hits) {
     // Get the index of the current element to be processed
     int i = get_global_id(0);
 
     Ray ray;
 
     // Do the operation
+    float hit = 3.402823466e+38F;
 
     for (int objIndex = 0; objIndex < count; ++objIndex) {
-        const ObjectData obj = objs[objIndex];
+        const ObjectData* obj = objs + objIndex;
 
-        ray.start.x = obj.mvInverse.s0 * rays[i].start.x + obj.mvInverse.s4 * rays[i].start.y + obj.mvInverse.s8 * rays[i].start.z + obj.mvInverse.sC * 1.f;
-        ray.start.y = obj.mvInverse.s1 * rays[i].start.x + obj.mvInverse.s5 * rays[i].start.y + obj.mvInverse.s9 * rays[i].start.z + obj.mvInverse.sD * 1.f;
-        ray.start.z = obj.mvInverse.s2 * rays[i].start.x + obj.mvInverse.s6 * rays[i].start.y + obj.mvInverse.sA * rays[i].start.z + obj.mvInverse.sE * 1.f;
+        ray.start.x = obj->mvInverse.s0 * rays[i].start.x + obj->mvInverse.s4 * rays[i].start.y + obj->mvInverse.s8 * rays[i].start.z + obj->mvInverse.sC * 1.f;
+        ray.start.y = obj->mvInverse.s1 * rays[i].start.x + obj->mvInverse.s5 * rays[i].start.y + obj->mvInverse.s9 * rays[i].start.z + obj->mvInverse.sD * 1.f;
+        ray.start.z = obj->mvInverse.s2 * rays[i].start.x + obj->mvInverse.s6 * rays[i].start.y + obj->mvInverse.sA * rays[i].start.z + obj->mvInverse.sE * 1.f;
 
-        ray.direction.x = obj.mvInverse.s0 * rays[i].direction.x + obj.mvInverse.s4 * rays[i].direction.y + obj.mvInverse.s8 * rays[i].direction.z;
-        ray.direction.y = obj.mvInverse.s1 * rays[i].direction.x + obj.mvInverse.s5 * rays[i].direction.y + obj.mvInverse.s9 * rays[i].direction.z;
-        ray.direction.z = obj.mvInverse.s2 * rays[i].direction.x + obj.mvInverse.s6 * rays[i].direction.y + obj.mvInverse.sA * rays[i].direction.z;
+        ray.direction.x = obj->mvInverse.s0 * rays[i].direction.x + obj->mvInverse.s4 * rays[i].direction.y + obj->mvInverse.s8 * rays[i].direction.z;
+        ray.direction.y = obj->mvInverse.s1 * rays[i].direction.x + obj->mvInverse.s5 * rays[i].direction.y + obj->mvInverse.s9 * rays[i].direction.z;
+        ray.direction.z = obj->mvInverse.s2 * rays[i].direction.x + obj->mvInverse.s6 * rays[i].direction.y + obj->mvInverse.sA * rays[i].direction.z;
 
-        switch (obj.type) {
+        switch (obj->type) {
         case 0: // Sphere
         {
             // Solve quadratic
@@ -63,7 +64,9 @@ __kernel void raycast(const ulong count, __global const ObjectData* objs, __glob
             // object is fully behind camera
             if (tMin < 0) continue;
 
-            hits[i] = objIndex + 1;
+            if (hit < tMin) continue;
+            
+            hit = tMin;
             continue;
         }
 
@@ -71,5 +74,7 @@ __kernel void raycast(const ulong count, __global const ObjectData* objs, __glob
             break;
         }
     }
+
+    if (hit < 3.402823466e+38F) hits[i] = hit;
 }
 

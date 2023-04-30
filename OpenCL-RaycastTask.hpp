@@ -41,6 +41,7 @@ typedef struct cl_ObjectData {
     // cl_Material mat;
     cl_float16 mv, mvInverse, mvInverseTranspose;
     cl_uint type;
+    uint8_t spacer[60];
 
     cl_ObjectData() : mv({ 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1 }), mvInverse(mv), mvInverseTranspose(mv), type(0) { }
     cl_ObjectData(const ObjectData& cpy) {
@@ -61,16 +62,14 @@ static int raycastRays(const vector<ObjectData>& objects, const vector<Ray3D>& r
 
     const size_t RAYCAST_COUNT = rays.size();
 
-    const size_t RAY_LIST_SIZE = RAYCAST_COUNT;
     cl_Ray* rayArr = new cl_Ray[RAYCAST_COUNT];
 
-    const size_t HITTEST_LIST_SIZE = RAYCAST_COUNT * sizeof(uint8_t);
-    uint8_t* hitTestArr = new uint8_t[RAYCAST_COUNT];
+    float* hitTestArr = new float[RAYCAST_COUNT];
 
     for (int i = 0; i < RAYCAST_COUNT; i++) {
         rayArr[i] = cl_Ray(rays[i]);
 
-        hitTestArr[i] = 0;
+        hitTestArr[i] = 0.f;
     }
 
     // Load the kernel source code into the array source_str
@@ -106,17 +105,17 @@ static int raycastRays(const vector<ObjectData>& objects, const vector<Ray3D>& r
     cl_mem objs_mem_obj = clCreateBuffer(context, CL_MEM_READ_ONLY,
         OBJECT_COUNT * sizeof(cl_ObjectData), NULL, &ret);
     cl_mem rays_mem_obj = clCreateBuffer(context, CL_MEM_READ_ONLY,
-        RAY_LIST_SIZE * sizeof(cl_Ray), NULL, &ret);
+        RAYCAST_COUNT * sizeof(cl_Ray), NULL, &ret);
     cl_mem hits_mem_obj = clCreateBuffer(context, CL_MEM_WRITE_ONLY,
-        HITTEST_LIST_SIZE * sizeof(uint8_t), NULL, &ret);
+        RAYCAST_COUNT * sizeof(float), NULL, &ret);
 
     // Copy the lists A and B to their respective memory buffers
     ret = clEnqueueWriteBuffer(command_queue, objs_mem_obj, CL_TRUE, 0,
         OBJECT_COUNT * sizeof(cl_ObjectData), objArr, 0, NULL, NULL);
     ret = clEnqueueWriteBuffer(command_queue, rays_mem_obj, CL_TRUE, 0,
-        RAY_LIST_SIZE * sizeof(cl_Ray), rayArr, 0, NULL, NULL);
+        RAYCAST_COUNT * sizeof(cl_Ray), rayArr, 0, NULL, NULL);
     ret = clEnqueueWriteBuffer(command_queue, hits_mem_obj, CL_TRUE, 0,
-        HITTEST_LIST_SIZE * sizeof(uint8_t), hitTestArr, 0, NULL, NULL);
+        RAYCAST_COUNT * sizeof(float), hitTestArr, 0, NULL, NULL);
 
     // Create a program from the kernel source
     cl_program program = clCreateProgramWithSource(context, 1,
@@ -152,7 +151,7 @@ static int raycastRays(const vector<ObjectData>& objects, const vector<Ray3D>& r
 
     // Read the memory buffer C on the device to the local variable C
     ret = clEnqueueReadBuffer(command_queue, hits_mem_obj, CL_TRUE, 0,
-        RAYCAST_COUNT * sizeof(uint8_t), hitTestArr, 0, NULL, NULL);
+        RAYCAST_COUNT * sizeof(float), hitTestArr, 0, NULL, NULL);
 
     for (int i = 0; i < RAYCAST_COUNT; i++) {
         if (hitTestArr[i] > 0U)
