@@ -66,8 +66,8 @@ int main(int argc, char** argv) {
         }
     }
 
-    IRaytracer* raytracer = (IRaytracer*)new CPURaytracer();
-    //IRaytracer* raytracer = (IRaytracer*)new OpenCLRaytracer();
+    //IRaytracer* raytracer = (IRaytracer*)new CPURaytracer();
+    IRaytracer* raytracer = (IRaytracer*)new OpenCLRaytracer();
 
     std::cout << "Scene file loaded without any errors.\n";
 

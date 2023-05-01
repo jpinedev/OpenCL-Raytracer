@@ -44,6 +44,9 @@
     <None Include="shade_kernel.cl">
       <Filter>Source Files</Filter>
     </None>
+    <None Include="shade_and_reflect_kernel.cl">
+      <Filter>Source Files</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ObjectData.hpp">
