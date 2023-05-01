@@ -98,7 +98,7 @@ int CPURaytracer::Shade(const std::vector<ObjectData>& objects, const std::vecto
 {
     for (int ii = 0; ii < rays.size(); ++ii) {
         if (raycast(objects, rays[ii], hits[ii]))
-            pixelData[ii] = shadeNormals(hits[ii]);// shade(objects, lights, hits[ii]);
+            pixelData[ii] = shade(objects, lights, hits[ii]);
     }
     return 0;
 }
