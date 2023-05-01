@@ -197,7 +197,7 @@ int OpenCLRaytracer::Shade(const std::vector<ObjectData>& objects, const std::ve
     // Copy the lists A and B to their respective memory buffers
     ret = clEnqueueWriteBuffer(command_queue, objs_mem_obj, CL_TRUE, 0,
         OBJECT_COUNT * sizeof(cl_ObjectData), objArr, 0, NULL, NULL);
-    ret = clEnqueueWriteBuffer(command_queue, objs_mem_obj, CL_TRUE, 0,
+    ret = clEnqueueWriteBuffer(command_queue, lights_mem_obj, CL_TRUE, 0,
         LIGHT_COUNT * sizeof(cl_Light), lightArr, 0, NULL, NULL);
     ret = clEnqueueWriteBuffer(command_queue, rays_mem_obj, CL_TRUE, 0,
         RAYCAST_COUNT * sizeof(cl_Ray), rayArr, 0, NULL, NULL);

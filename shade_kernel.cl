@@ -167,6 +167,16 @@ bool raycast(const ulong count, const ObjectData* objs, const Ray* viewspaceRay,
     return (hit->time < MAX_FLOAT);
 }
 
+inline float3 componentWiseMultiply(const float3 lhs, const float3 rhs)
+{
+    return (float3)(lhs.x * rhs.x, lhs.y * rhs.y, lhs.z * rhs.z);
+}
+
+// assumes normal is normalized
+inline float3 reflect(const float3 incident, const float3 normal) {
+    return incident - 2.f * dot(incident, normal) * normal;
+}
+
 __kernel void shade(const ulong objCount, __global const ObjectData* objs, const ulong lightCount, __global const Light* lights, __global const Ray* rays, __global float3* pixelData) {
     // Get the index of the current element to be processed
     int ii = get_global_id(0);
@@ -177,6 +187,73 @@ __kernel void shade(const ulong objCount, __global const ObjectData* objs, const
     if (!raycast(objCount, objs, &rays[ii], &hit)) return;
 
     // shade using normals
-    pixelData[ii] = (hit.normal + (float3)( 1.f, 1.f, 1.f )) * 0.5f;
+    //pixelData[ii] = (hit.normal + (float3)( 1.f, 1.f, 1.f )) * 0.5f;
+    //return;
+
+    // shade using ambient
+    //pixelData[ii] = hit.mat.ambient;
+    //return;
+
+    float3 fPosition = hit.intersection.xyz;
+    float3 fNormal = hit.normal;
+    float3 fColor = { 0.f, 0.f, 0.f };
+    float3 lightVec = { 0.f, 0.f, 0.f }, viewVec = { 0.f, 0.f, 0.f }, reflectVec = { 0.f, 0.f, 0.f };
+    float3 normalView = { 0.f, 0.f, 0.f };
+    float3 ambient = { 0.f, 0.f, 0.f }, diffuse = { 0.f, 0.f, 0.f }, specular = { 0.f, 0.f, 0.f };
+    float nDotL, rDotV;
+
+    float3 absorbColor = { 0.f, 0.f, 0.f }, reflectColor = { 0.f, 0.f, 0.f }, transparencyColor = { 0.f, 0.f, 0.f };
+
+    for (int lightIndex = 0; lightIndex < lightCount; ++lightIndex) {
+        const Light* light = &lights[lightIndex];
+        if (light->position.w != 0)
+            lightVec = light->position.xyz - fPosition.xyz;
+        else
+            lightVec = -light->position.xyz;
+
+        // Shoot ray towards light source, any hit means shadow.
+        Ray rayToLight;
+        rayToLight.start = (float4)(fPosition, 1.f);
+        rayToLight.direction = (float4)(lightVec, 0.f);
+        // Need 'skin' width to avoid hitting itself.
+        rayToLight.start += 0.01f * (float4)(normalize(rayToLight.direction.xyz), 0);
+        HitRecord shadowcastHit;
+        shadowcastHit.time = MAX_FLOAT;
+
+        raycast(objCount, objs, &rayToLight, &shadowcastHit);
+
+        lightVec = normalize(lightVec);
+
+        float3 tNormal = fNormal;
+        normalView = normalize(tNormal);
+        nDotL = dot(normalView, lightVec);
+
+        viewVec = -fPosition;
+        viewVec = normalize(viewVec);
+
+        reflectVec = reflect(-lightVec, normalView);
+        reflectVec = normalize(reflectVec);
+
+        rDotV = dot(reflectVec, viewVec);
+        rDotV = fmax(rDotV, 0.0f);
+
+        ambient = componentWiseMultiply(hit.mat.ambient, light->ambient);
+
+        // Object cannot directly see the light
+        if (shadowcastHit.time >= 1.f || shadowcastHit.time < 0) {
+            diffuse = componentWiseMultiply(hit.mat.diffuse, light->diffuse) * fmax(nDotL, 0.f);
+            if (nDotL > 0)
+                specular = componentWiseMultiply(hit.mat.specular, light->specular) * pow(rDotV, fmax(hit.mat.shininess, 1.f));
+        }
+        else {
+            diffuse = (float3)( 0., 0., 0. );
+            specular = (float3)( 0., 0., 0. );
+        }
+        absorbColor = absorbColor + ambient + diffuse + specular;
+    }
+
+    fColor = absorbColor;
+
+    pixelData[ii] = fColor;
 }
 
