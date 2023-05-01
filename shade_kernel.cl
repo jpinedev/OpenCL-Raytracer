@@ -1,6 +1,6 @@
 typedef struct Ray {
-    float3 start;
-    float3 direction;
+    float4 start;
+    float4 direction;
 } Ray;
 
 typedef struct Material {
@@ -9,11 +9,23 @@ typedef struct Material {
     float shininess;
 } Material;
 
+typedef struct HitRecord {
+    Material mat;
+    float4 intersection;
+    float3 normal;
+    float time;
+} HitRecord;
+
 typedef struct ObjectData {
     Material mat;
     float16 mv, mvInverse, mvInverseTranspose;
     uint type;
 } ObjectData;
+
+typedef struct Light {
+    float3 ambient, diffuse, specular;
+    float4 position;
+} Light;
 
 const float MAX_FLOAT = 3.402823466e+38F;
 
@@ -44,25 +56,21 @@ bool intersectsWidthBoxSide(float* tMin, float* tMax, float start, float dir) {
     return true;
 }
 
-__kernel void raycast(const ulong count, __global const ObjectData* objs, __global const Ray* rays, __global float* hits) {
-    // Get the index of the current element to be processed
-    int i = get_global_id(0);
+inline void transform(float4* o_vec, const float16* i_mat, const float4* i_vec) {
+    o_vec->x = i_mat->s0 * i_vec->x + i_mat->s4 * i_vec->y + i_mat->s8 * i_vec->z + i_mat->sC * i_vec->w;
+    o_vec->y = i_mat->s1 * i_vec->x + i_mat->s5 * i_vec->y + i_mat->s9 * i_vec->z + i_mat->sD * i_vec->w;
+    o_vec->z = i_mat->s2 * i_vec->x + i_mat->s6 * i_vec->y + i_mat->sA * i_vec->z + i_mat->sE * i_vec->w;
+    o_vec->w = i_mat->s3 * i_vec->x + i_mat->s7 * i_vec->y + i_mat->sB * i_vec->z + i_mat->sF * i_vec->w;
+}
 
+bool raycast(const ulong count, const ObjectData* objs, const Ray* viewspaceRay, HitRecord* hit) {
     Ray ray;
-
-    // Do the operation
-    float hit = MAX_FLOAT;
 
     for (int objIndex = 0; objIndex < count; ++objIndex) {
         const ObjectData* obj = objs + objIndex;
 
-        ray.start.x = obj->mvInverse.s0 * rays[i].start.x + obj->mvInverse.s4 * rays[i].start.y + obj->mvInverse.s8 * rays[i].start.z + obj->mvInverse.sC * 1.f;
-        ray.start.y = obj->mvInverse.s1 * rays[i].start.x + obj->mvInverse.s5 * rays[i].start.y + obj->mvInverse.s9 * rays[i].start.z + obj->mvInverse.sD * 1.f;
-        ray.start.z = obj->mvInverse.s2 * rays[i].start.x + obj->mvInverse.s6 * rays[i].start.y + obj->mvInverse.sA * rays[i].start.z + obj->mvInverse.sE * 1.f;
-
-        ray.direction.x = obj->mvInverse.s0 * rays[i].direction.x + obj->mvInverse.s4 * rays[i].direction.y + obj->mvInverse.s8 * rays[i].direction.z;
-        ray.direction.y = obj->mvInverse.s1 * rays[i].direction.x + obj->mvInverse.s5 * rays[i].direction.y + obj->mvInverse.s9 * rays[i].direction.z;
-        ray.direction.z = obj->mvInverse.s2 * rays[i].direction.x + obj->mvInverse.s6 * rays[i].direction.y + obj->mvInverse.sA * rays[i].direction.z;
+        transform(&ray.start, &obj->mvInverse, &viewspaceRay->start);
+        transform(&ray.direction, &obj->mvInverse, &viewspaceRay->direction);
 
         switch (obj->type) {
         case 0: // Sphere
@@ -91,9 +99,18 @@ __kernel void raycast(const ulong count, __global const ObjectData* objs, __glob
             // object is fully behind camera
             if (tMin < 0) continue;
 
-            if (hit < tMin) continue;
-            
-            hit = tMin;
+            if (hit->time < tMin) continue;
+
+            hit->time = tMin;
+
+            float4 objSpaceIntersection = { ray.start + tMin * ray.direction };
+            transform(&hit->intersection, &obj->mv, &objSpaceIntersection);
+            float4 objSpaceNormal = objSpaceIntersection;
+            objSpaceNormal.w = 0.f;
+            float4 normal;
+            transform(&normal, &obj->mv, &objSpaceNormal);
+            hit->normal = normalize(normal.xyz);
+            hit->mat = obj->mat;
             continue;
         }
 
@@ -121,9 +138,9 @@ __kernel void raycast(const ulong count, __global const ObjectData* objs, __glob
             if (tHit < 0) continue;
 
             // already hit a closer object
-            if (hit <= tHit) continue;
+            if (hit->time <= tHit) continue;
 
-            float4 objSpaceIntersection = { ray.start + tHit * ray.direction, 1.f };
+            float4 objSpaceIntersection = { ray.start + tHit * ray.direction };
 
             float4 objSpaceNormal = { 0.f, 0.f, 0.f, 0.f };
             if (objSpaceIntersection.x > 0.4998f) objSpaceNormal.x += 1.f;
@@ -135,15 +152,31 @@ __kernel void raycast(const ulong count, __global const ObjectData* objs, __glob
             if (objSpaceIntersection.z > 0.4998f) objSpaceNormal.z += 1.f;
             else if (objSpaceIntersection.z < -0.4998f) objSpaceNormal.z -= 1.f;
 
-            objSpaceNormal = normalize(objSpaceNormal);
-
-            hit = tHit;
+            hit->time = tHit;
+            transform(&hit->intersection, &obj->mv, &objSpaceIntersection);
+            float4 normal;
+            transform(&normal, &obj->mv, &objSpaceNormal);
+            hit->normal = normalize(normal.xyz);
+            hit->mat = obj->mat;
             continue;
         }
 
         }
     }
 
-    if (hit < MAX_FLOAT) hits[i] = hit;
+    return (hit->time < MAX_FLOAT);
+}
+
+__kernel void shade(const ulong objCount, __global const ObjectData* objs, const ulong lightCount, __global const Light* lights, __global const Ray* rays, __global float3* pixelData) {
+    // Get the index of the current element to be processed
+    int ii = get_global_id(0);
+
+    HitRecord hit;
+    hit.time = MAX_FLOAT;
+
+    if (!raycast(objCount, objs, &rays[ii], &hit)) return;
+
+    // shade using normals
+    pixelData[ii] = (hit.normal + (float3)( 1.f, 1.f, 1.f )) * 0.5f;
 }
 

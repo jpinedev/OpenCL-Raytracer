@@ -38,7 +38,10 @@
     <None Include="vector_add_kernel.cl">
       <Filter>Source Files</Filter>
     </None>
-    <None Include="raycast_kernel.cl">
+    <None Include="hittest_kernel.cl">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="shade_kernel.cl">
       <Filter>Source Files</Filter>
     </None>
   </ItemGroup>
