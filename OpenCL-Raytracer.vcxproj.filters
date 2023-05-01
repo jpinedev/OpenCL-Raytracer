@@ -27,6 +27,12 @@
     <ClCompile Include="SceneLoader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="CPURaytracer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="OpenCLRaytracer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="vector_add_kernel.cl">
@@ -55,7 +61,13 @@
     <ClInclude Include="SceneLoader.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="OpenCL-RaycastTask.hpp">
+    <ClInclude Include="CPURaytracer.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="IRaytracer.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="OpenCLRaytracer.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -67,6 +79,9 @@
       <Filter>Resource Files</Filter>
     </Text>
     <Text Include="multipleSpheres.txt">
+      <Filter>Resource Files</Filter>
+    </Text>
+    <Text Include="roundedCube.txt">
       <Filter>Resource Files</Filter>
     </Text>
   </ItemGroup>

@@ -15,6 +15,35 @@ typedef struct ObjectData {
     uint type;
 } ObjectData;
 
+const float MAX_FLOAT = 3.402823466e+38F;
+
+bool intersectsWidthBoxSide(float* tMin, float* tMax, float start, float dir) {
+    float t1 = (-0.5f - start);
+    float t2 = (0.5f - start);
+    if (dir == 0) {
+        // no intersection
+        if (copysign(t1, t2) == t1) return false;
+
+        *tMin = -MAX_FLOAT;
+        *tMax = MAX_FLOAT;
+        return true;
+    }
+
+    t1 /= dir;
+    t2 /= dir;
+
+    if (dir < 0) {
+        *tMin = fmin(t1, t2);
+        *tMax = fmax(t1, t2);
+    }
+    else {
+        *tMin = t1;
+        *tMax = t2;
+    }
+
+    return true;
+}
+
 __kernel void raycast(const ulong count, __global const ObjectData* objs, __global const Ray* rays, __global float* hits) {
     // Get the index of the current element to be processed
     int i = get_global_id(0);
@@ -22,7 +51,7 @@ __kernel void raycast(const ulong count, __global const ObjectData* objs, __glob
     Ray ray;
 
     // Do the operation
-    float hit = 3.402823466e+38F;
+    float hit = MAX_FLOAT;
 
     for (int objIndex = 0; objIndex < count; ++objIndex) {
         const ObjectData* obj = objs + objIndex;
@@ -69,10 +98,52 @@ __kernel void raycast(const ulong count, __global const ObjectData* objs, __glob
         }
 
         case 1: // Box
-            break;
+        {
+            float txMin, txMax, tyMin, tyMax, tzMin, tzMax;
+
+            if (!intersectsWidthBoxSide(&txMin, &txMax, ray.start.x, ray.direction.x))
+                continue;
+
+            if (!intersectsWidthBoxSide(&tyMin, &tyMax, ray.start.y, ray.direction.y))
+                continue;
+
+            if (!intersectsWidthBoxSide(&tzMin, &tzMax, ray.start.z, ray.direction.z))
+                continue;
+
+            float tMin = fmax(fmax(txMin, tyMin), tzMin);
+            float tMax = fmin(fmin(txMax, tyMax), tzMax);
+
+            // no intersection
+            if (tMax < tMin) continue;
+
+            float tHit = (tMin >= 0 && tMax >= 0) ? fmin(tMin, tMax) : fmax(tMin, tMax);
+            // object is fully behind camera
+            if (tHit < 0) continue;
+
+            // already hit a closer object
+            if (hit <= tHit) continue;
+
+            float4 objSpaceIntersection = { ray.start + tHit * ray.direction, 1.f };
+
+            float4 objSpaceNormal = { 0.f, 0.f, 0.f, 0.f };
+            if (objSpaceIntersection.x > 0.4998f) objSpaceNormal.x += 1.f;
+            else if (objSpaceIntersection.x < -0.4998f) objSpaceNormal.x -= 1.f;
+
+            if (objSpaceIntersection.y > 0.4998f) objSpaceNormal.y += 1.f;
+            else if (objSpaceIntersection.y < -0.4998f) objSpaceNormal.y -= 1.f;
+
+            if (objSpaceIntersection.z > 0.4998f) objSpaceNormal.z += 1.f;
+            else if (objSpaceIntersection.z < -0.4998f) objSpaceNormal.z -= 1.f;
+
+            objSpaceNormal = normalize(objSpaceNormal);
+
+            hit = tHit;
+            continue;
+        }
+
         }
     }
 
-    if (hit < 3.402823466e+38F) hits[i] = hit;
+    if (hit < MAX_FLOAT) hits[i] = hit;
 }
 
