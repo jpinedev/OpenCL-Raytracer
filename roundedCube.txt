@@ -2,6 +2,16 @@ material lightingTest
   ambient 1 0 0
   diffuse 0 1 0
   specular 0 0 1
+  absorption .7
+  reflection .3
+
+material mirror
+  ambient .1 .1 .1
+  diffuse .6 .6 .6
+  specular 1 1 1
+  shininess 100
+  absorption .2
+  reflection .8
 
 light globalLight
   ambient .3 .3 .3
@@ -11,7 +21,7 @@ light globalLight
 ===
 rotate 45 1 1 1
   scale 4 4 4
-    primative box lightingTest
+    primative box mirror
 
   translate 2 2 2
     primative sphere lightingTest

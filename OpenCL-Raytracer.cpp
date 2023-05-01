@@ -66,8 +66,8 @@ int main(int argc, char** argv) {
         }
     }
 
-    //IRaytracer* raytracer = (IRaytracer*)new CPURaytracer();
-    IRaytracer* raytracer = (IRaytracer*)new OpenCLRaytracer();
+    IRaytracer* raytracer = (IRaytracer*)new CPURaytracer();
+    //IRaytracer* raytracer = (IRaytracer*)new OpenCLRaytracer();
 
     std::cout << "Scene file loaded without any errors.\n";
 
@@ -76,7 +76,8 @@ int main(int argc, char** argv) {
     auto startTime = std::chrono::high_resolution_clock::now();
 
     //raytracer->HitTest(objects, rays, rayHits, pixelData);
-    raytracer->Shade(objects, lights, rays, rayHits, pixelData);
+    //raytracer->Shade(objects, lights, rays, rayHits, pixelData);
+    raytracer->ShadeWithReflections(10, objects, lights, rays, rayHits, pixelData);
 
     auto endTime = std::chrono::high_resolution_clock::now();
 

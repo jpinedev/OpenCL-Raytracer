@@ -141,14 +141,14 @@ void SceneLoader::ParseHeader() {
                     throw runtime_error(format("Error parsing scene file at line {}:\n\treflection expects 1 argument, found 0\n\treflection <reflection ratio>", lineNum));
                 }
 
-                materials[propName].absorption = floats[0];
+                materials[propName].reflection = floats[0];
             }
             else if (command == "transparency") {
                 if (!(stream >> floats[0])) {
                     throw runtime_error(format("Error parsing scene file at line {}:\n\ttransparency expects 1 argument, found 0\n\ttransparency <transparency ratio>", lineNum));
                 }
 
-                materials[propName].absorption = floats[0];
+                materials[propName].transparency = floats[0];
             }
             else if (command == "shininess") {
                 if (!(stream >> floats[0])) {

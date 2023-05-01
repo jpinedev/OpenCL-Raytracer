@@ -177,14 +177,14 @@ inline float3 reflect(const float3 incident, const float3 normal) {
     return incident - 2.f * dot(incident, normal) * normal;
 }
 
-__kernel void shade(const ulong objCount, __global const ObjectData* objs, const ulong lightCount, __global const Light* lights, __global const Ray* rays, __global float3* pixelData) {
+__kernel void shade(const uint MAX_BOUNCES, const ulong OBJECT_COUNT, __global const ObjectData* objs, const ulong LIGHT_COUNT, __global const Light* lights, __global const Ray* rays, __global float3* pixelData) {
     // Get the index of the current element to be processed
     int ii = get_global_id(0);
 
     HitRecord hit;
     hit.time = MAX_FLOAT;
 
-    if (!raycast(objCount, objs, &rays[ii], &hit)) return;
+    if (!raycast(OBJECT_COUNT, objs, &rays[ii], &hit)) return;
 
     // shade using normals
     //pixelData[ii] = (hit.normal + (float3)( 1.f, 1.f, 1.f )) * 0.5f;
@@ -204,7 +204,7 @@ __kernel void shade(const ulong objCount, __global const ObjectData* objs, const
 
     float3 absorbColor = { 0.f, 0.f, 0.f }, reflectColor = { 0.f, 0.f, 0.f }, transparencyColor = { 0.f, 0.f, 0.f };
 
-    for (int lightIndex = 0; lightIndex < lightCount; ++lightIndex) {
+    for (int lightIndex = 0; lightIndex < LIGHT_COUNT; ++lightIndex) {
         const Light* light = &lights[lightIndex];
         if (light->position.w != 0)
             lightVec = light->position.xyz - fPosition.xyz;
@@ -220,7 +220,7 @@ __kernel void shade(const ulong objCount, __global const ObjectData* objs, const
         HitRecord shadowcastHit;
         shadowcastHit.time = MAX_FLOAT;
 
-        raycast(objCount, objs, &rayToLight, &shadowcastHit);
+        raycast(OBJECT_COUNT, objs, &rayToLight, &shadowcastHit);
 
         lightVec = normalize(lightVec);
 

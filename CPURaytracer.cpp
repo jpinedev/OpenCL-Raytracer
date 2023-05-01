@@ -15,7 +15,10 @@ bool raycast(const std::vector<ObjectData>& objects, const Ray3D& ray, HitRecord
     for (auto& obj : objects) {
         obj.Raycast(ray, hit);
     }
-    return (hit.time < MAX_FLOAT);
+    if (hit.time == MAX_FLOAT) return false;
+
+    hit.reflection = glm::reflect(glm::vec3(ray.direction), hit.normal);
+    return true;
 }
 
 int CPURaytracer::HitTest(const std::vector<ObjectData>& objects, const std::vector<Ray3D>& rays, std::vector<HitRecord>& hits, std::vector<glm::vec3>& pixelData)
@@ -33,7 +36,7 @@ inline glm::vec3 componentWiseMultiply(const glm::vec3& lhs, const glm::vec3& rh
     return glm::vec3(lhs.x * rhs.x, lhs.y * rhs.y, lhs.z * rhs.z);
 }
 
-glm::vec3 shade(const std::vector<ObjectData>& objects, const std::vector<Light>& lights, const HitRecord& hit)
+glm::vec3 shade(const std::vector<ObjectData>& objects, const std::vector<Light>& lights, const HitRecord& hit, const int MAX_BOUNCES = 0)
 {
     const glm::vec3& fPosition = hit.intersection;
     const glm::vec3& fNormal = hit.normal;
@@ -89,16 +92,36 @@ glm::vec3 shade(const std::vector<ObjectData>& objects, const std::vector<Light>
         absorbColor = absorbColor + ambient + diffuse + specular;
     }
 
-    fColor = absorbColor;
+    if (MAX_BOUNCES > 0 && hit.mat.absorption <= 0.999f) {
+        Ray3D reflectionRay(fPosition, hit.reflection);
+        reflectionRay.start += glm::normalize(reflectionRay.direction) * 0.001f;
+        HitRecord reflectionHit;
+
+        if (raycast(objects, reflectionRay, reflectionHit))
+            reflectColor = shade(objects, lights, reflectionHit, MAX_BOUNCES - 1);
+
+        fColor = absorbColor * hit.mat.absorption
+            + reflectColor * hit.mat.reflection
+            + transparencyColor * hit.mat.transparency;
+    }
+    else {
+        fColor = absorbColor;
+    }
 
     return fColor;
 }
 
 int CPURaytracer::Shade(const std::vector<ObjectData>& objects, const std::vector<Light>& lights, const std::vector<Ray3D>& rays, std::vector<HitRecord>& hits, std::vector<glm::vec3>& pixelData)
 {
+    ShadeWithReflections(0, objects, lights, rays, hits, pixelData);
+    return 0;
+}
+
+int CPURaytracer::ShadeWithReflections(const unsigned int MAX_BOUNCES, const std::vector<ObjectData>& objects, const std::vector<Light>& lights, const std::vector<Ray3D>& rays, std::vector<HitRecord>& hits, std::vector<glm::vec3>& pixelData)
+{
     for (int ii = 0; ii < rays.size(); ++ii) {
         if (raycast(objects, rays[ii], hits[ii]))
-            pixelData[ii] = shade(objects, lights, hits[ii]);
+            pixelData[ii] = shade(objects, lights, hits[ii], MAX_BOUNCES);
     }
     return 0;
 }

@@ -11,5 +11,6 @@ struct HitRecord {
     Material mat;
     glm::vec3 intersection;
     glm::vec3 normal;
+    glm::vec3 reflection;
     float time = MAX_FLOAT;
 };

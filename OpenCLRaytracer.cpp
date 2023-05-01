@@ -264,6 +264,11 @@ int OpenCLRaytracer::Shade(const std::vector<ObjectData>& objects, const std::ve
     return 0;
 }
 
+int OpenCLRaytracer::ShadeWithReflections(const unsigned int MAX_BOUNCES, const std::vector<ObjectData>& objects, const std::vector<Light>& lights, const std::vector<Ray3D>& rays, std::vector<HitRecord>& hits, std::vector<glm::vec3>& pixelData)
+{
+    return 0;
+}
+
 
 inline void cpyVec3ToFloat3(cl_float3* dest, const glm::vec3& src) {
     *dest = { src.x, src.y, src.z };
