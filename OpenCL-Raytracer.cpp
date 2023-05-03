@@ -13,6 +13,8 @@
 #include "CPURaytracer.hpp"
 #include "OpenCLRaytracer.hpp"
 
+#include <boost/gil/gil_all.hpp>
+
 Ray3D screenSpaceToViewSpace(float width, float height, glm::vec2 pos, float angle) {
     float halfWidth = width / 2.0f;
     float halfHeight = height / 2.0f;
@@ -25,7 +27,7 @@ Ray3D screenSpaceToViewSpace(float width, float height, glm::vec2 pos, float ang
 
 int main(int argc, char** argv) {
     // TODO: add flags for setting these vars
-    int width = 800, height = 800;
+    int width = 1920, height = 1080;
     float fov = glm::radians(60.f);
     fov *= 0.5f;
     // TODO: add flag for output file
@@ -58,8 +60,8 @@ int main(int argc, char** argv) {
 
     std::vector<Ray3D> rays;
     std::vector<HitRecord> rayHits(height * width);
-    std::vector<glm::vec3> pixelData(height * width);
-
+    std::vector<float> pixelData(height * width * 3);
+    
     for (int jj = 0; jj < height; ++jj) {
         for (int ii = 0; ii < width; ++ii) {
             rays.emplace_back(screenSpaceToViewSpace((float)width, (float)height, glm::vec2(ii, height - jj), fov));
@@ -92,11 +94,11 @@ int main(int argc, char** argv) {
     op << "P3" << "\n";
     op << width << " " << height << "\n";
     op << "255\n";
-    for (int ii = 0; ii < height * width; ++ii) {
+    for (size_t ii = 0; ii < height * width; ++ii) {
         pixelData[ii] *= 255.f;
-        op << glm::min(255, (int)floorf(pixelData[ii].r)) << " ";
-        op << glm::min(255, (int)floorf(pixelData[ii].g)) << " ";
-        op << glm::min(255, (int)floorf(pixelData[ii].b)) << std::endl;
+        op << glm::min(255, (int)floorf(pixelData[ii * 3] * 255.f)) << " ";
+        op << glm::min(255, (int)floorf(pixelData[ii * 3 + 1] * 255.f)) << " ";
+        op << glm::min(255, (int)floorf(pixelData[ii * 3 + 2] * 255.f)) << std::endl;
     }
     op.close();
 

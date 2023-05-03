@@ -21,11 +21,12 @@ bool raycast(const std::vector<ObjectData>& objects, const Ray3D& ray, HitRecord
     return true;
 }
 
-int CPURaytracer::HitTest(const std::vector<ObjectData>& objects, const std::vector<Ray3D>& rays, std::vector<HitRecord>& hits, std::vector<glm::vec3>& pixelData)
+int CPURaytracer::HitTest(const std::vector<ObjectData>& objects, const std::vector<Ray3D>& rays, std::vector<HitRecord>& hits, std::vector<float>& pixelData)
 {
-    for (int ii = 0; ii < rays.size(); ++ii) {
+    for (size_t ii = 0; ii < rays.size(); ++ii) {
         if (raycast(objects, rays[ii], hits[ii])) {
-            pixelData[ii] = shadeHitTest(hits[ii]);
+            glm::vec3 color = shadeHitTest(hits[ii]);
+            memcpy(&pixelData[ii * 3], glm::value_ptr(color), sizeof(float) * 3);
         }
     }
     return 0;
@@ -111,17 +112,32 @@ glm::vec3 shade(const std::vector<ObjectData>& objects, const std::vector<Light>
     return fColor;
 }
 
-int CPURaytracer::Shade(const std::vector<ObjectData>& objects, const std::vector<Light>& lights, const std::vector<Ray3D>& rays, std::vector<HitRecord>& hits, std::vector<glm::vec3>& pixelData)
+int CPURaytracer::Shade(const std::vector<ObjectData>& objects, const std::vector<Light>& lights, const std::vector<Ray3D>& rays, std::vector<HitRecord>& hits, std::vector<float>& pixelData)
 {
     ShadeWithReflections(0, objects, lights, rays, hits, pixelData);
     return 0;
 }
+#include <iostream>
+#include <chrono>
 
-int CPURaytracer::ShadeWithReflections(const unsigned int MAX_BOUNCES, const std::vector<ObjectData>& objects, const std::vector<Light>& lights, const std::vector<Ray3D>& rays, std::vector<HitRecord>& hits, std::vector<glm::vec3>& pixelData)
+int CPURaytracer::ShadeWithReflections(const unsigned int MAX_BOUNCES, const std::vector<ObjectData>& objects, const std::vector<Light>& lights, const std::vector<Ray3D>& rays, std::vector<HitRecord>& hits, std::vector<float>& pixelData)
 {
+
+    std::cout << "Executing...\n";
+
+    auto startTime = std::chrono::high_resolution_clock::now();
+
     for (int ii = 0; ii < rays.size(); ++ii) {
-        if (raycast(objects, rays[ii], hits[ii]))
-            pixelData[ii] = shade(objects, lights, hits[ii], MAX_BOUNCES);
+        if (raycast(objects, rays[ii], hits[ii])) {
+            glm::vec3 color = shade(objects, lights, hits[ii], MAX_BOUNCES);
+            memcpy(&pixelData[ii * 3], glm::value_ptr(color), sizeof(float) * 3);
+        }
     }
+
+    auto endTime = std::chrono::high_resolution_clock::now();
+
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
+
+    std::cout << "Calculating finished in " << duration.count() << "ms.\n";
     return 0;
 }

@@ -1,10 +1,11 @@
 #include "OpenCLRaytracer.hpp"
 
 #include <iostream>
+#include <chrono>
 
 using namespace std;
 
-int OpenCLRaytracer::HitTest(const std::vector<ObjectData>& objects, const std::vector<Ray3D>& rays, std::vector<HitRecord>& hits, std::vector<glm::vec3>& pixelData)
+int OpenCLRaytracer::HitTest(const std::vector<ObjectData>& objects, const std::vector<Ray3D>& rays, std::vector<HitRecord>& hits, std::vector<float>& pixelData)
 {
     const size_t OBJECT_COUNT = objects.size();
     cl_ObjectData* objArr = new cl_ObjectData[OBJECT_COUNT];
@@ -106,9 +107,12 @@ int OpenCLRaytracer::HitTest(const std::vector<ObjectData>& objects, const std::
     ret = clEnqueueReadBuffer(command_queue, hits_mem_obj, CL_TRUE, 0,
         RAYCAST_COUNT * sizeof(float), hitTestArr, 0, NULL, NULL);
 
-    for (int ii = 0; ii < RAYCAST_COUNT; ii++) {
-        if (hitTestArr[ii] > 0U)
-            pixelData[ii] = { 1.f, 1.f, 1.f };
+    for (size_t ii = 0; ii < RAYCAST_COUNT; ii++) {
+        if (hitTestArr[ii] > 0U) {
+            pixelData[ii * 3] = 1.f;
+            pixelData[ii * 3 + 1] = 1.f;
+            pixelData[ii * 3 + 2] = 1.f;
+        }
     }
 
     // Clean up
@@ -127,7 +131,7 @@ int OpenCLRaytracer::HitTest(const std::vector<ObjectData>& objects, const std::
     return 0;
 }
 
-int OpenCLRaytracer::Shade(const std::vector<ObjectData>& objects, const std::vector<Light>& lights, const std::vector<Ray3D>& rays, std::vector<HitRecord>& hits, std::vector<glm::vec3>& pixelData)
+int OpenCLRaytracer::Shade(const std::vector<ObjectData>& objects, const std::vector<Light>& lights, const std::vector<Ray3D>& rays, std::vector<HitRecord>& hits, std::vector<float>& pixelData)
 {
     const size_t OBJECT_COUNT = objects.size();
     cl_ObjectData* objArr = new cl_ObjectData[OBJECT_COUNT];
@@ -242,8 +246,10 @@ int OpenCLRaytracer::Shade(const std::vector<ObjectData>& objects, const std::ve
     ret = clEnqueueReadBuffer(command_queue, pixelData_mem_obj, CL_TRUE, 0,
         RAYCAST_COUNT * sizeof(cl_float3), pixelDataArr, 0, NULL, NULL);
 
-    for (int ii = 0; ii < RAYCAST_COUNT; ii++) {
-        pixelData[ii] = { pixelDataArr[ii].x, pixelDataArr[ii].y, pixelDataArr[ii].z };
+    for (size_t ii = 0; ii < RAYCAST_COUNT; ii++) {
+        pixelData[ii * 3] = pixelDataArr[ii].x;
+        pixelData[ii * 3 + 1] = pixelDataArr[ii].y;
+        pixelData[ii * 3 + 2] = pixelDataArr[ii].z;
     }
 
     // Clean up
@@ -264,7 +270,7 @@ int OpenCLRaytracer::Shade(const std::vector<ObjectData>& objects, const std::ve
     return 0;
 }
 
-int OpenCLRaytracer::ShadeWithReflections(const unsigned int MAX_BOUNCES, const std::vector<ObjectData>& objects, const std::vector<Light>& lights, const std::vector<Ray3D>& rays, std::vector<HitRecord>& hits, std::vector<glm::vec3>& pixelData)
+int OpenCLRaytracer::ShadeWithReflections(const unsigned int MAX_BOUNCES, const std::vector<ObjectData>& objects, const std::vector<Light>& lights, const std::vector<Ray3D>& rays, std::vector<HitRecord>& hits, std::vector<float>& pixelData)
 {
     const size_t OBJECT_COUNT = objects.size();
     cl_ObjectData* objArr = new cl_ObjectData[OBJECT_COUNT];
@@ -331,16 +337,6 @@ int OpenCLRaytracer::ShadeWithReflections(const unsigned int MAX_BOUNCES, const 
     cl_mem pixelData_mem_obj = clCreateBuffer(context, CL_MEM_WRITE_ONLY,
         RAYCAST_COUNT * sizeof(cl_float3), NULL, &ret);
 
-    // Copy the lists A and B to their respective memory buffers
-    ret = clEnqueueWriteBuffer(command_queue, objs_mem_obj, CL_TRUE, 0,
-        OBJECT_COUNT * sizeof(cl_ObjectData), objArr, 0, NULL, NULL);
-    ret = clEnqueueWriteBuffer(command_queue, lights_mem_obj, CL_TRUE, 0,
-        LIGHT_COUNT * sizeof(cl_Light), lightArr, 0, NULL, NULL);
-    ret = clEnqueueWriteBuffer(command_queue, rays_mem_obj, CL_TRUE, 0,
-        RAYCAST_COUNT * sizeof(cl_Ray), rayArr, 0, NULL, NULL);
-    ret = clEnqueueWriteBuffer(command_queue, pixelData_mem_obj, CL_TRUE, 0,
-        RAYCAST_COUNT * sizeof(cl_float3), pixelDataArr, 0, NULL, NULL);
-
     // Create a program from the kernel source
     cl_program program = clCreateProgramWithSource(context, 1,
         (const char**)&source_str, (const size_t*)&source_size, &ret);
@@ -370,6 +366,20 @@ int OpenCLRaytracer::ShadeWithReflections(const unsigned int MAX_BOUNCES, const 
     ret = clSetKernelArg(kernel, 5, sizeof(cl_mem), (void*)&rays_mem_obj);
     ret = clSetKernelArg(kernel, 6, sizeof(cl_mem), (void*)&pixelData_mem_obj);
 
+    std::cout << "Executing kernel...\n";
+
+    auto startTime = std::chrono::high_resolution_clock::now();
+
+    // Copy the lists A and B to their respective memory buffers
+    ret = clEnqueueWriteBuffer(command_queue, objs_mem_obj, CL_TRUE, 0,
+        OBJECT_COUNT * sizeof(cl_ObjectData), objArr, 0, NULL, NULL);
+    ret = clEnqueueWriteBuffer(command_queue, lights_mem_obj, CL_TRUE, 0,
+        LIGHT_COUNT * sizeof(cl_Light), lightArr, 0, NULL, NULL);
+    ret = clEnqueueWriteBuffer(command_queue, rays_mem_obj, CL_TRUE, 0,
+        RAYCAST_COUNT * sizeof(cl_Ray), rayArr, 0, NULL, NULL);
+    ret = clEnqueueWriteBuffer(command_queue, pixelData_mem_obj, CL_TRUE, 0,
+        RAYCAST_COUNT * sizeof(cl_float3), pixelDataArr, 0, NULL, NULL);
+
     // Execute the OpenCL kernel on the list
     size_t global_item_size = RAYCAST_COUNT; // Process the entire lists
     size_t local_item_size = 32; // Divide work items into groups of 64
@@ -380,8 +390,16 @@ int OpenCLRaytracer::ShadeWithReflections(const unsigned int MAX_BOUNCES, const 
     ret = clEnqueueReadBuffer(command_queue, pixelData_mem_obj, CL_TRUE, 0,
         RAYCAST_COUNT * sizeof(cl_float3), pixelDataArr, 0, NULL, NULL);
 
-    for (int ii = 0; ii < RAYCAST_COUNT; ii++) {
-        pixelData[ii] = { pixelDataArr[ii].x, pixelDataArr[ii].y, pixelDataArr[ii].z };
+    auto endTime = std::chrono::high_resolution_clock::now();
+
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
+
+    std::cout << "Kernel finished in " << duration.count() << "ms.\n";
+
+    for (size_t ii = 0; ii < RAYCAST_COUNT; ii++) {
+        pixelData[ii * 3] = pixelDataArr[ii].x;
+        pixelData[ii * 3 + 1] = pixelDataArr[ii].y;
+        pixelData[ii * 3 + 2] = pixelDataArr[ii].z;
     }
 
     // Clean up

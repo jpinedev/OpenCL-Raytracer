@@ -1,6 +1,5 @@
 #include "SceneLoader.hpp"
 #include <stack>
-#include <format>
 #include <fstream>
 #include <sstream>
 #include <glm/glm.hpp>
@@ -19,7 +18,7 @@ void SceneLoader::Init(const std::string& sceneFileLoc) {
     ifstream infile(sceneFileLoc);
 
     if (!infile.is_open()) {
-        throw runtime_error(format("Scene file '{}' could not be found.", sceneFileLoc));
+        throw runtime_error(string_format("Scene file '{}' could not be found.", sceneFileLoc));
     }
 
     string line;
@@ -81,7 +80,7 @@ void SceneLoader::ParseHeader() {
                 lastIndent += 2;
 
                 if (!(stream >> propName)) {
-                    throw runtime_error(format("Error parsing scene file at line {}:\n\tmaterial expects 1 argument, found 0\n\tmaterial <material name>", lineNum));
+                    throw runtime_error(string_format("Error parsing scene file at line {}:\n\tmaterial expects 1 argument, found 0\n\tmaterial <material name>", lineNum));
                 }
                 materials.emplace(propName, Material());
             }
@@ -92,12 +91,12 @@ void SceneLoader::ParseHeader() {
                 lastIndent += 2;
 
                 if (!(stream >> propName)) {
-                    throw runtime_error(format("Error parsing scene file at line {}:\n\tlight expects 1 argument, found 0\n\tlight <light name>", lineNum));
+                    throw runtime_error(string_format("Error parsing scene file at line {}:\n\tlight expects 1 argument, found 0\n\tlight <light name>", lineNum));
                 }
                 lightProperties.emplace(propName, LightProperties());
             }
             else {
-                throw runtime_error(format("Error parsing scene file at line {}:\n\tunsupported command '{}' in header\n\tif you are trying to specify properties, ensure the correct level of indentation", lineNum, command));
+                throw runtime_error(string_format("Error parsing scene file at line {}:\n\tunsupported command '{}' in header\n\tif you are trying to specify properties, ensure the correct level of indentation", lineNum, command));
             }
             break;
 
@@ -105,7 +104,7 @@ void SceneLoader::ParseHeader() {
             if (command == "ambient") {
                 for (int ii = 0; ii < 3; ++ii) {
                     if (!(stream >> floats[ii])) {
-                        throw runtime_error(format("Error parsing scene file at line {}:\n\tambient expects 3 arguments, found {}\n\tambient <r> <g> <b>", lineNum, ii + 1));
+                        throw runtime_error(string_format("Error parsing scene file at line {}:\n\tambient expects 3 arguments, found {}\n\tambient <r> <g> <b>", lineNum, ii + 1));
                     }
                 }
 
@@ -114,7 +113,7 @@ void SceneLoader::ParseHeader() {
             else if (command == "diffuse") {
                 for (int ii = 0; ii < 3; ++ii) {
                     if (!(stream >> floats[ii])) {
-                        throw runtime_error(format("Error parsing scene file at line {}:\n\tdiffuse expects 3 arguments, found {}\n\tdiffuse <r> <g> <b>", lineNum, ii + 1));
+                        throw runtime_error(string_format("Error parsing scene file at line {}:\n\tdiffuse expects 3 arguments, found {}\n\tdiffuse <r> <g> <b>", lineNum, ii + 1));
                     }
                 }
 
@@ -123,7 +122,7 @@ void SceneLoader::ParseHeader() {
             else if (command == "specular") {
                 for (int ii = 0; ii < 3; ++ii) {
                     if (!(stream >> floats[ii])) {
-                        throw runtime_error(format("Error parsing scene file at line {}:\n\tspecular expects 3 arguments, found {}\n\tspecular <r> <g> <b>", lineNum, ii + 1));
+                        throw runtime_error(string_format("Error parsing scene file at line {}:\n\tspecular expects 3 arguments, found {}\n\tspecular <r> <g> <b>", lineNum, ii + 1));
                     }
                 }
 
@@ -131,38 +130,38 @@ void SceneLoader::ParseHeader() {
             }
             else if (command == "absorption") {
                 if (!(stream >> floats[0])) {
-                    throw runtime_error(format("Error parsing scene file at line {}:\n\tabsorption expects 1 argument, found 0\n\tabsorption <absorption ratio>", lineNum));
+                    throw runtime_error(string_format("Error parsing scene file at line {}:\n\tabsorption expects 1 argument, found 0\n\tabsorption <absorption ratio>", lineNum));
                 }
 
                 materials[propName].absorption = floats[0];
             }
             else if (command == "reflection") {
                 if (!(stream >> floats[0])) {
-                    throw runtime_error(format("Error parsing scene file at line {}:\n\treflection expects 1 argument, found 0\n\treflection <reflection ratio>", lineNum));
+                    throw runtime_error(string_format("Error parsing scene file at line {}:\n\treflection expects 1 argument, found 0\n\treflection <reflection ratio>", lineNum));
                 }
 
                 materials[propName].reflection = floats[0];
             }
             else if (command == "transparency") {
                 if (!(stream >> floats[0])) {
-                    throw runtime_error(format("Error parsing scene file at line {}:\n\ttransparency expects 1 argument, found 0\n\ttransparency <transparency ratio>", lineNum));
+                    throw runtime_error(string_format("Error parsing scene file at line {}:\n\ttransparency expects 1 argument, found 0\n\ttransparency <transparency ratio>", lineNum));
                 }
 
                 materials[propName].transparency = floats[0];
             }
             else if (command == "shininess") {
                 if (!(stream >> floats[0])) {
-                    throw runtime_error(format("Error parsing scene file at line {}:\n\tshininess expects 1 argument, found 0\n\tshininess <shininess value>", lineNum));
+                    throw runtime_error(string_format("Error parsing scene file at line {}:\n\tshininess expects 1 argument, found 0\n\tshininess <shininess value>", lineNum));
                 }
 
                 materials[propName].shininess = floats[0];
             }
             else {
                 if (command == "material" || command == "light") {
-                    throw runtime_error(format("Error parsing scene file at line {}:\n\ttried to declare a {} in a nested scope, unindent to declare a new {}", lineNum, command, command));
+                    throw runtime_error(string_format("Error parsing scene file at line {}:\n\ttried to declare a {} in a nested scope, unindent to declare a new {}", lineNum, command, command));
                 }
 
-                throw runtime_error(format("Error parsing scene file at line {}:\n\tunsupported command '{}' while parsing material", lineNum, command));
+                throw runtime_error(string_format("Error parsing scene file at line {}:\n\tunsupported command '{}' while parsing material", lineNum, command));
             }
             break;
 
@@ -170,7 +169,7 @@ void SceneLoader::ParseHeader() {
             if (command == "ambient") {
                 for (int ii = 0; ii < 3; ++ii) {
                     if (!(stream >> floats[ii])) {
-                        throw runtime_error(format("Error parsing scene file at line {}:\n\tambient expects 3 arguments, found {}\n\tambient <r> <g> <b>", lineNum, ii + 1));
+                        throw runtime_error(string_format("Error parsing scene file at line {}:\n\tambient expects 3 arguments, found {}\n\tambient <r> <g> <b>", lineNum, ii + 1));
                     }
                 }
 
@@ -179,7 +178,7 @@ void SceneLoader::ParseHeader() {
             else if (command == "diffuse") {
                 for (int ii = 0; ii < 3; ++ii) {
                     if (!(stream >> floats[ii])) {
-                        throw runtime_error(format("Error parsing scene file at line {}:\n\tdiffuse expects 3 arguments, found {}\n\tdiffuse <r> <g> <b>", lineNum, ii + 1));
+                        throw runtime_error(string_format("Error parsing scene file at line {}:\n\tdiffuse expects 3 arguments, found {}\n\tdiffuse <r> <g> <b>", lineNum, ii + 1));
                     }
                 }
 
@@ -188,7 +187,7 @@ void SceneLoader::ParseHeader() {
             else if (command == "specular") {
                 for (int ii = 0; ii < 3; ++ii) {
                     if (!(stream >> floats[ii])) {
-                        throw runtime_error(format("Error parsing scene file at line {}:\n\tspecular expects 3 arguments, found {}\n\tspecular <r> <g> <b>", lineNum, ii + 1));
+                        throw runtime_error(string_format("Error parsing scene file at line {}:\n\tspecular expects 3 arguments, found {}\n\tspecular <r> <g> <b>", lineNum, ii + 1));
                     }
                 }
 
@@ -196,10 +195,10 @@ void SceneLoader::ParseHeader() {
             }
             else {
                 if (command == "material" || command == "light") {
-                    throw runtime_error(format("Error parsing scene file at line {}:\n\ttried to declare a {} in a nested scope, unindent to declare a new {}", lineNum, command, command));
+                    throw runtime_error(string_format("Error parsing scene file at line {}:\n\ttried to declare a {} in a nested scope, unindent to declare a new {}", lineNum, command, command));
                 }
 
-                throw runtime_error(format("Error parsing scene file at line {}:\n\tunsupported command '{}' while parsing light", lineNum, command));
+                throw runtime_error(string_format("Error parsing scene file at line {}:\n\tunsupported command '{}' while parsing light", lineNum, command));
             }
             break;
         }
@@ -239,24 +238,24 @@ void SceneLoader::ParseBody(std::vector<ObjectData>& o_objects, std::vector<Ligh
 
         if (command == "primative") {
             if (!(stream >> primativeType)) {
-                throw runtime_error(format("Error parsing scene file at line {}:\n\tprimative expects 2 argument, found 0\n\tprimative <primative type> <material name>", lineNum));
+                throw runtime_error(string_format("Error parsing scene file at line {}:\n\tprimative expects 2 argument, found 0\n\tprimative <primative type> <material name>", lineNum));
             }
             if (!(stream >> propName)) {
-                throw runtime_error(format("Error parsing scene file at line {}:\n\tprimative expects 2 argument, found 1\n\tprimative <primative type> <material name>", lineNum));
+                throw runtime_error(string_format("Error parsing scene file at line {}:\n\tprimative expects 2 argument, found 1\n\tprimative <primative type> <material name>", lineNum));
             }
 
             ObjectData::PrimativeType type;
             if (primativeType == "sphere") type = ObjectData::PrimativeType::sphere;
             else if (primativeType == "box") type = ObjectData::PrimativeType::box;
             else {
-                throw runtime_error(format("Error parsing scene file at line {}:\n\tunsupported primative type '{}'", lineNum, primativeType));
+                throw runtime_error(string_format("Error parsing scene file at line {}:\n\tunsupported primative type '{}'", lineNum, primativeType));
             }
 
             o_objects.emplace_back(type, materials.at(propName), modelview.top());
         }
         else if (command == "light") {
             if (!(stream >> propName)) {
-                throw runtime_error(format("Error parsing scene file at line {}:\n\tlight expects 1 argument, found 0\n\tlight <light name>", lineNum));
+                throw runtime_error(string_format("Error parsing scene file at line {}:\n\tlight expects 1 argument, found 0\n\tlight <light name>", lineNum));
             }
 
             o_lights.emplace_back(lightProperties.at(propName), modelview.top());
@@ -264,41 +263,41 @@ void SceneLoader::ParseBody(std::vector<ObjectData>& o_objects, std::vector<Ligh
         else if (command == "translate") {
             for (int ii = 0; ii < 3; ++ii) {
                 if (!(stream >> floats[ii])) {
-                    throw runtime_error(format("Error parsing scene file at line {}:\n\ttranslate expects 3 arguments, found {}\n\ttranslate <x> <y> <z>", lineNum, ii + 1));
+                    throw runtime_error(string_format("Error parsing scene file at line {}:\n\ttranslate expects 3 arguments, found {}\n\ttranslate <x> <y> <z>", lineNum, ii + 1));
                 }
             }
             modelview.push(modelview.top());
             modelview.top() *= glm::translate(glm::mat4(1.f), glm::vec3(floats));
 
-            // Indent future lines to apply this transformation
+            // Indent future lines to apply this transstring_formation
             lastIndent += 2;
         }
         else if (command == "scale") {
             for (int ii = 0; ii < 3; ++ii) {
                 if (!(stream >> floats[ii])) {
-                    throw runtime_error(format("Error parsing scene file at line {}:\n\tscale expects 3 arguments, found {}\n\tscale <x> <y> <z>", lineNum, ii + 1));
+                    throw runtime_error(string_format("Error parsing scene file at line {}:\n\tscale expects 3 arguments, found {}\n\tscale <x> <y> <z>", lineNum, ii + 1));
                 }
             }
             modelview.push(modelview.top());
             modelview.top() *= glm::scale(glm::mat4(1.f), glm::vec3(floats));
 
-            // Indent future lines to apply this transformation
+            // Indent future lines to apply this transstring_formation
             lastIndent += 2;
         }
         else if (command == "rotate") {
             for (int ii = 0; ii < 4; ++ii) {
                 if (!(stream >> floats[ii])) {
-                    throw runtime_error(format("Error parsing scene file at line {}:\n\trotate expects 4 arguments, found {}\n\trotate <angle in degrees> <axis x> <axis y> <axis z>", lineNum, ii + 1));
+                    throw runtime_error(string_format("Error parsing scene file at line {}:\n\trotate expects 4 arguments, found {}\n\trotate <angle in degrees> <axis x> <axis y> <axis z>", lineNum, ii + 1));
                 }
             }
             modelview.push(modelview.top());
             modelview.top() *= glm::rotate(glm::mat4(1.f), glm::radians(floats.x), glm::normalize(glm::vec3(floats.y, floats.z, floats.w)));
 
-            // Indent future lines to apply this transformation
+            // Indent future lines to apply this transstring_formation
             lastIndent += 2;
         }
         else {
-            throw runtime_error(format("Error parsing scene file at line {}:\n\tunsupported command '{}' in body", lineNum, command));
+            throw runtime_error(string_format("Error parsing scene file at line {}:\n\tunsupported command '{}' in body", lineNum, command));
         }
     }
 }
@@ -317,10 +316,10 @@ bool SceneLoader::GetNextLine(string& o_line, size_t& o_indent) {
         if (lineIt->at(firstChar) == '#') continue;
 
         if (firstChar % 2 != 0) {
-            throw runtime_error(format("Error parsing scene file at line {}:\n\tline does not have proper indentation, must be multiples of two", lineNum));
+            throw runtime_error(string_format("Error parsing scene file at line {}:\n\tline does not have proper indentation, must be multiples of two", lineNum));
         }
         if (firstChar > lastIndent) {
-            throw runtime_error(format("Error parsing scene file at line {}:\n\tline is indented too far", lineNum));
+            throw runtime_error(string_format("Error parsing scene file at line {}:\n\tline is indented too far", lineNum));
         }
 
         o_line = *lineIt;
