@@ -114,8 +114,8 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.1\lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>OpenCL.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:\Users\pinej\Documents\libs\glfw-3.3.8.bin.WIN64\lib-vc2022;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.1\lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>OpenCL.lib;glfw3.lib;opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -135,11 +135,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="CPURaytracer.cpp" />
     <ClCompile Include="ObjectData.cpp" />
     <ClCompile Include="OpenCLRaytracer.cpp" />
     <ClCompile Include="OpenCL-Raytracer.cpp" />
-    <ClCompile Include="OpenCL-TaskDemo.hpp" />
+    <ClCompile Include="OpenGLView.cpp" />
+    <ClCompile Include="PPMExporter.cpp" />
     <ClCompile Include="SceneLoader.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -149,13 +149,14 @@
     <None Include="vector_add_kernel.cl" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="CPURaytracer.hpp" />
     <ClInclude Include="HitRecord.hpp" />
     <ClInclude Include="IRaytracer.hpp" />
     <ClInclude Include="Light.hpp" />
     <ClInclude Include="Material.hpp" />
     <ClInclude Include="ObjectData.hpp" />
     <ClInclude Include="OpenCLRaytracer.hpp" />
+    <ClInclude Include="OpenGLView.hpp" />
+    <ClInclude Include="PPMExporter.hpp" />
     <ClInclude Include="Ray3D.hpp" />
     <ClInclude Include="SceneLoader.hpp" />
   </ItemGroup>

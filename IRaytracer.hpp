@@ -9,11 +9,13 @@
 class IRaytracer
 {
 public:
-    virtual int HitTest(const std::vector<ObjectData>& objects, const std::vector<Ray3D>& rays, std::vector<HitRecord>& hits, std::vector<float>& pixelData) = 0;
-    virtual int Shade(const std::vector<ObjectData>& objects, const std::vector<Light>& lights, const std::vector<Ray3D>& rays, std::vector<HitRecord>& hits, std::vector<float>& pixelData) = 0;
-    virtual int ShadeWithReflections(const unsigned int MAX_BOUNCES, const std::vector<ObjectData>& objects, const std::vector<Light>& lights, const std::vector<Ray3D>& rays, std::vector<HitRecord>& hits, std::vector<float>& pixelData) = 0;
+    virtual void Render(std::vector<float>& pixelData) = 0;
 
 protected:
-    IRaytracer() { }
+    const std::vector<ObjectData>& objects;
+    const std::vector<Light>& lights;
+    const std::vector<Ray3D>& rays;
+
+    IRaytracer(const std::vector<ObjectData>& objects, const std::vector<Light>& lights, const std::vector<Ray3D>& rays) : objects(objects), lights(lights), rays(rays) { }
 };
 

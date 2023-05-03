@@ -51,14 +51,30 @@ class OpenCLRaytracer : IRaytracer {
     };
 
 public:
-    // Inherited via IRaytracer
-    virtual int HitTest(const std::vector<ObjectData>& objects, const std::vector<Ray3D>& rays, std::vector<HitRecord>& hits, std::vector<float>& pixelData) override;
+    OpenCLRaytracer(const std::vector<ObjectData>& objects, const std::vector<Light>& lights, const std::vector<Ray3D>& rays, const unsigned int MAX_BOUNCES);
+    ~OpenCLRaytracer();
 
     // Inherited via IRaytracer
-    virtual int Shade(const std::vector<ObjectData>& objects, const std::vector<Light>& lights, const std::vector<Ray3D>& rays, std::vector<HitRecord>& hits, std::vector<float>& pixelData) override;
+    virtual void Render(std::vector<float>& pixelData) override;
 
-    // Inherited via IRaytracer
-    virtual int ShadeWithReflections(const unsigned int MAX_BOUNCES, const std::vector<ObjectData>& objects, const std::vector<Light>& lights, const std::vector<Ray3D>& rays, std::vector<HitRecord>& hits, std::vector<float>& pixelData) override;
+private:
+    const unsigned int MAX_BOUNCES;
+    const size_t OBJECT_COUNT, LIGHT_COUNT, RAYCAST_COUNT;
+
+    cl_ObjectData* objArr = NULL;
+    cl_Light* lightArr = NULL;
+    cl_Ray* rayArr = NULL;
+    cl_float3* pixelDataArr = NULL;
+
+    cl_mem objs_mem_obj;
+    cl_mem lights_mem_obj;
+    cl_mem rays_mem_obj;
+    cl_mem pixelData_mem_obj;
+
+    cl_context context;
+    cl_command_queue command_queue;
+    cl_program program;
+    cl_kernel kernel;
 };
 
 #endif

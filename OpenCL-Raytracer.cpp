@@ -10,10 +10,11 @@
 #include "Light.hpp"
 #include "SceneLoader.hpp"
 #include "IRaytracer.hpp"
-#include "CPURaytracer.hpp"
 #include "OpenCLRaytracer.hpp"
 
 #include <boost/gil/gil_all.hpp>
+#include "PPMExporter.hpp"
+#include "OpenGLView.hpp"
 
 Ray3D screenSpaceToViewSpace(float width, float height, glm::vec2 pos, float angle) {
     float halfWidth = width / 2.0f;
@@ -58,6 +59,8 @@ int main(int argc, char** argv) {
         return 1;
     }
 
+    std::cout << "Scene file loaded without any errors.\n";
+
     std::vector<Ray3D> rays;
     std::vector<HitRecord> rayHits(height * width);
     std::vector<float> pixelData(height * width * 3);
@@ -69,17 +72,19 @@ int main(int argc, char** argv) {
     }
 
     //IRaytracer* raytracer = (IRaytracer*)new CPURaytracer();
-    IRaytracer* raytracer = (IRaytracer*)new OpenCLRaytracer();
+    IRaytracer* raytracer = (IRaytracer*)new OpenCLRaytracer(objects, lights, rays, 30);
 
-    std::cout << "Scene file loaded without any errors.\n";
+    OpenGLView view;
 
+    view.SetUpWindow(width, height);
+
+    while (!view.ShouldWindowClose()) {
+        raytracer->Render(pixelData);
+        view.Display(pixelData);
+    }
     std::cout << "Rendering...\n";
 
     auto startTime = std::chrono::high_resolution_clock::now();
-
-    //raytracer->HitTest(objects, rays, rayHits, pixelData);
-    //raytracer->Shade(objects, lights, rays, rayHits, pixelData);
-    raytracer->ShadeWithReflections(10, objects, lights, rays, rayHits, pixelData);
 
     auto endTime = std::chrono::high_resolution_clock::now();
 
@@ -87,22 +92,9 @@ int main(int argc, char** argv) {
 
     std::cout << "Render finished in " << duration.count() << "ms.\n";
 
-    std::cout << "Exporting to file '" << outFileLoc << "'...\n";
+    view.TearDownWindow();
 
-    std::ofstream op(outFileLoc);
-
-    op << "P3" << "\n";
-    op << width << " " << height << "\n";
-    op << "255\n";
-    for (size_t ii = 0; ii < height * width; ++ii) {
-        pixelData[ii] *= 255.f;
-        op << glm::min(255, (int)floorf(pixelData[ii * 3] * 255.f)) << " ";
-        op << glm::min(255, (int)floorf(pixelData[ii * 3 + 1] * 255.f)) << " ";
-        op << glm::min(255, (int)floorf(pixelData[ii * 3 + 2] * 255.f)) << std::endl;
-    }
-    op.close();
-
-    std::cout << "Export finished.\n";
+    //PPMExporter::ExportP3(outFileLoc, width, height, pixelData);
 
     return 0;
 }
