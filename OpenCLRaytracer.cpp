@@ -13,23 +13,23 @@ using namespace std;
 OpenCLRaytracer::OpenCLRaytracer(const std::vector<ObjectData>& objects, const std::vector<Light>& lights, const std::vector<Ray3D>& rays, const unsigned int MAX_BOUNCES)
     : IRaytracer(objects, lights, rays), MAX_BOUNCES(MAX_BOUNCES), OBJECT_COUNT(objects.size()), LIGHT_COUNT(lights.size()), RAYCAST_COUNT(rays.size())
 {
-    objArr = new cl_ObjectData[OBJECT_COUNT];
+    objArr.reserve(OBJECT_COUNT);
     for (int i = 0; i < OBJECT_COUNT; i++) {
-        objArr[i] = cl_ObjectData(objects[i]);
+        objArr.emplace_back(objects[i]);
     }
 
-    lightArr = new cl_Light[LIGHT_COUNT];
+    lightArr.reserve(LIGHT_COUNT);
     for (int i = 0; i < LIGHT_COUNT; i++) {
-        lightArr[i] = cl_Light(lights[i]);
+        lightArr.emplace_back(lights[i]);
     }
 
-    cl_Ray* rayArr = new cl_Ray[RAYCAST_COUNT];
+    rayArr.reserve(RAYCAST_COUNT);
 
     pixelDataArr = new cl_float3[RAYCAST_COUNT];
     for (int i = 0; i < RAYCAST_COUNT; i++) {
-        rayArr[i] = cl_Ray(rays[i]);
+        rayArr.emplace_back(rays[i]);
 
-        pixelDataArr[i] = { 0.f, 0.f, 0.f };
+        pixelDataArr[i] = { 0.f, 0.f, 0.f, 1.f };
     }
 
     // Get platform and device information
@@ -67,33 +67,17 @@ OpenCLRaytracer::OpenCLRaytracer(const std::vector<ObjectData>& objects, const s
     kernel.set_arg(5, sizeof(cl_mem), (void*)&rays_mem_obj);
     kernel.set_arg(6, sizeof(cl_mem), (void*)&pixelData_mem_obj);
 
-    command_queue.enqueue_write_buffer(objs_mem_obj, 0, OBJECT_COUNT * sizeof(cl_ObjectData), objArr);
-    command_queue.enqueue_write_buffer(lights_mem_obj, 0, LIGHT_COUNT * sizeof(cl_Light), lightArr);
-    command_queue.enqueue_write_buffer(rays_mem_obj, 0, RAYCAST_COUNT * sizeof(cl_Ray), rayArr);
+    command_queue.enqueue_write_buffer(objs_mem_obj, 0, OBJECT_COUNT * sizeof(cl_ObjectData), objArr.data());
+    command_queue.enqueue_write_buffer(lights_mem_obj, 0, LIGHT_COUNT * sizeof(cl_Light), lightArr.data());
+    command_queue.enqueue_write_buffer(rays_mem_obj, 0, RAYCAST_COUNT * sizeof(cl_Ray), rayArr.data());
     command_queue.enqueue_write_buffer(pixelData_mem_obj, 0, RAYCAST_COUNT * sizeof(cl_float3), pixelDataArr);
 }
 
 OpenCLRaytracer::~OpenCLRaytracer() {
-    /*
-    cl_int ret;
-    ret = clFlush(command_queue);
-    ret = clFinish(command_queue);
-    ret = clReleaseKernel(kernel);
-    ret = clReleaseProgram(program);
-    ret = clReleaseMemObject(objs_mem_obj);
-    ret = clReleaseMemObject(lights_mem_obj);
-    ret = clReleaseMemObject(rays_mem_obj);
-    ret = clReleaseMemObject(pixelData_mem_obj);
-    ret = clReleaseCommandQueue(command_queue);
-    ret = clReleaseContext(context);
-    */
-    delete[] objArr;
-    delete[] lightArr;
-    delete[] rayArr;
-    delete[] pixelDataArr;
+
 }
 
-void OpenCLRaytracer::Render(std::vector<float>& pixelData)
+cl_float4* OpenCLRaytracer::Render()
 {
     std::cout << "Executing kernel...\n";
 
@@ -113,9 +97,7 @@ void OpenCLRaytracer::Render(std::vector<float>& pixelData)
 
     std::cout << "Kernel finished in " << duration.count() << "ms.\n";
 
-    for (size_t ii = 0; ii < RAYCAST_COUNT; ii++) {
-        memcpy(&pixelData[ii * 3], &pixelDataArr[ii], sizeof(float) * 3);
-    }
+    return pixelDataArr;
 }
 
 

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <glm/glm.hpp>
+#include <CL/cl.h>
 #include <vector>
 #include "HitRecord.hpp"
 #include "Light.hpp"
@@ -9,7 +10,7 @@
 class IRaytracer
 {
 public:
-    virtual void Render(std::vector<float>& pixelData) = 0;
+    virtual cl_float4* Render() = 0;
 
 protected:
     const std::vector<ObjectData>& objects;

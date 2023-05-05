@@ -5,13 +5,13 @@ OpenGLView::OpenGLView()
 {
 }
 
-void OpenGLView::Display(const std::vector<float>& pixelData)
+void OpenGLView::Display(const cl_float4* pixelData)
 {
     glfwPollEvents();
 
     glClear(GL_COLOR_BUFFER_BIT);
 
-    glDrawPixels(width, height, GL_RGB, GL_FLOAT, pixelData.data());
+    glDrawPixels(width, height, GL_RGBA, GL_FLOAT, pixelData);
 
     glfwSwapBuffers(window);
 }

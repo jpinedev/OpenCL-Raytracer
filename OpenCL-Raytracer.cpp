@@ -80,7 +80,7 @@ int main(int argc, char** argv) {
     while (!view.ShouldWindowClose()) {
         auto startTime = std::chrono::high_resolution_clock::now();
 
-        raytracer->Render(pixelData);
+        auto pixelData = raytracer->Render();
         view.Display(pixelData);
 
         auto endTime = std::chrono::high_resolution_clock::now();

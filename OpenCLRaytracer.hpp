@@ -62,16 +62,16 @@ public:
     ~OpenCLRaytracer();
 
     // Inherited via IRaytracer
-    virtual void Render(std::vector<float>& pixelData) override;
+    virtual cl_float4* Render() override;
 
 private:
     const unsigned int MAX_BOUNCES;
     const size_t OBJECT_COUNT, LIGHT_COUNT, RAYCAST_COUNT;
 
-    cl_ObjectData* objArr = NULL;
-    cl_Light* lightArr = NULL;
-    cl_Ray* rayArr = NULL;
-    cl_float3* pixelDataArr = NULL;
+    std::vector<cl_ObjectData> objArr;
+    std::vector<cl_Light> lightArr;
+    std::vector<cl_Ray> rayArr;
+    cl_float4* pixelDataArr = NULL;
 
     boost::compute::buffer objs_mem_obj;
     boost::compute::buffer lights_mem_obj;
