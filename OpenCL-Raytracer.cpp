@@ -27,7 +27,8 @@ Ray3D screenSpaceToViewSpace(float width, float height, glm::vec2 pos, float ang
 
 int main(int argc, char** argv) {
     // TODO: add flags for setting these vars
-    int width = 1920, height = 1080;
+    //int width = 1920, height = 1080;
+    int width = 2560, height = 1440;
     float fov = glm::radians(60.f);
     fov *= 0.5f;
     // TODO: add flag for output file
@@ -78,16 +79,20 @@ int main(int argc, char** argv) {
     view.SetUpWindow(width, height);
 
     while (!view.ShouldWindowClose()) {
+#if _DEBUG
         auto startTime = std::chrono::high_resolution_clock::now();
+#endif
 
         auto pixelData = raytracer->Render();
         view.Display(pixelData);
 
+#if _DEBUG
         auto endTime = std::chrono::high_resolution_clock::now();
 
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
 
         std::cout << "Frame finished in " << duration.count() << "ms.\n";
+#endif
     }
 
 

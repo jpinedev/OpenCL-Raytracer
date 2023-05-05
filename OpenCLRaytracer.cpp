@@ -79,9 +79,11 @@ OpenCLRaytracer::~OpenCLRaytracer() {
 
 cl_float4* OpenCLRaytracer::Render()
 {
+#if _DEBUG
     std::cout << "Executing kernel...\n";
 
     auto startTime = std::chrono::high_resolution_clock::now();
+#endif
 
     // Execute the OpenCL kernel on the list
     size_t global_item_size = RAYCAST_COUNT; // Process the entire lists
@@ -91,11 +93,13 @@ cl_float4* OpenCLRaytracer::Render()
     // Read the memory buffer C on the device to the local variable C
     command_queue.enqueue_read_buffer(pixelData_mem_obj, 0, RAYCAST_COUNT * sizeof(cl_float3), pixelDataArr);
 
+#if _DEBUG
     auto endTime = std::chrono::high_resolution_clock::now();
 
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
 
     std::cout << "Kernel finished in " << duration.count() << "ms.\n";
+#endif
 
     return pixelDataArr;
 }

@@ -18,19 +18,19 @@
     <ClCompile Include="OpenCL-Raytracer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="OpenCL-TaskDemo.hpp">
-      <Filter>Header Files</Filter>
-    </ClCompile>
     <ClCompile Include="ObjectData.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="SceneLoader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="CPURaytracer.cpp">
+    <ClCompile Include="OpenCLRaytracer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="OpenCLRaytracer.cpp">
+    <ClCompile Include="OpenGLView.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="PPMExporter.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -67,13 +67,16 @@
     <ClInclude Include="SceneLoader.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="CPURaytracer.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="IRaytracer.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="OpenCLRaytracer.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="OpenGLView.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PPMExporter.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
