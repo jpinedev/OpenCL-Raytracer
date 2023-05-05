@@ -12,6 +12,13 @@
 #include "IRaytracer.hpp"
 #include "ObjectData.hpp"
 
+#include <boost/compute/system.hpp>
+#include <boost/compute/buffer.hpp>
+#include <boost/compute/context.hpp>
+#include <boost/compute/command_queue.hpp>
+#include <boost/compute/program.hpp>
+#include <boost/compute/kernel.hpp>
+
 #define MAX_SOURCE_SIZE (0x100000)
 
 class OpenCLRaytracer : IRaytracer {
@@ -66,15 +73,15 @@ private:
     cl_Ray* rayArr = NULL;
     cl_float3* pixelDataArr = NULL;
 
-    cl_mem objs_mem_obj;
-    cl_mem lights_mem_obj;
-    cl_mem rays_mem_obj;
-    cl_mem pixelData_mem_obj;
+    boost::compute::buffer objs_mem_obj;
+    boost::compute::buffer lights_mem_obj;
+    boost::compute::buffer rays_mem_obj;
+    boost::compute::buffer pixelData_mem_obj;
 
-    cl_context context;
-    cl_command_queue command_queue;
-    cl_program program;
-    cl_kernel kernel;
+    boost::compute::context context;
+    boost::compute::command_queue command_queue;
+    boost::compute::program program;
+    boost::compute::kernel kernel;
 };
 
 #endif

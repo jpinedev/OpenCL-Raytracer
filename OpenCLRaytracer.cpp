@@ -4,6 +4,10 @@
 #include <chrono>
 #include <stdio.h>
 
+#include <windows.h>
+#include <boost/compute/system.hpp>
+#include <boost/compute/buffer.hpp>
+
 using namespace std;
 
 OpenCLRaytracer::OpenCLRaytracer(const std::vector<ObjectData>& objects, const std::vector<Light>& lights, const std::vector<Ray3D>& rays, const unsigned int MAX_BOUNCES)
@@ -28,85 +32,49 @@ OpenCLRaytracer::OpenCLRaytracer(const std::vector<ObjectData>& objects, const s
         pixelDataArr[i] = { 0.f, 0.f, 0.f };
     }
 
-    // Load the kernel source code into the array source_str
-    FILE* fp;
-    char* source_str;
-    size_t source_size;
-
-    fp = fopen("shade_and_reflect_kernel.cl", "r");
-    if (!fp) {
-        fprintf(stderr, "Failed to load kernel.\n");
-        exit(1);
-    }
-    source_str = new char[MAX_SOURCE_SIZE];
-    source_size = fread(source_str, 1, MAX_SOURCE_SIZE, fp);
-    fclose(fp);
-
     // Get platform and device information
-    cl_platform_id platform_id = NULL;
-    cl_device_id device_id = NULL;
-    cl_uint ret_num_devices;
-    cl_uint ret_num_platforms;
-    cl_int ret = clGetPlatformIDs(1, &platform_id, &ret_num_platforms);
-    ret = clGetDeviceIDs(platform_id, CL_DEVICE_TYPE_DEFAULT, 1,
-        &device_id, &ret_num_devices);
+    boost::compute::device gpu = boost::compute::system::default_device();
 
     // Create an OpenCL context
-    context = clCreateContext(NULL, 1, &device_id, NULL, NULL, &ret);
+    //context = clCreateContext(NULL, 1, &device_id, NULL, NULL, &ret);
+    context = boost::compute::system::default_context();
+    //context = boost::compute::opengl_create_shared_context();
 
     // Create a command queue
-    command_queue = clCreateCommandQueueWithProperties(context, device_id, 0, &ret);
+    command_queue = boost::compute::system::default_queue();
 
     // Create memory buffers on the device for each vector 
-    objs_mem_obj = clCreateBuffer(context, CL_MEM_READ_ONLY,
-        OBJECT_COUNT * sizeof(cl_ObjectData), NULL, &ret);
-    lights_mem_obj = clCreateBuffer(context, CL_MEM_READ_ONLY,
-        LIGHT_COUNT * sizeof(cl_Light), NULL, &ret);
-    rays_mem_obj = clCreateBuffer(context, CL_MEM_READ_ONLY,
-        RAYCAST_COUNT * sizeof(cl_Ray), NULL, &ret);
-    pixelData_mem_obj = clCreateBuffer(context, CL_MEM_WRITE_ONLY,
-        RAYCAST_COUNT * sizeof(cl_float3), NULL, &ret);
+    objs_mem_obj = boost::compute::buffer(context, OBJECT_COUNT * sizeof(cl_ObjectData), CL_MEM_READ_ONLY);
+    lights_mem_obj = boost::compute::buffer(context, LIGHT_COUNT * sizeof(cl_Light), CL_MEM_READ_ONLY);
+    rays_mem_obj = boost::compute::buffer(context, RAYCAST_COUNT * sizeof(cl_Ray), CL_MEM_READ_ONLY);
+    pixelData_mem_obj = boost::compute::buffer(context, RAYCAST_COUNT * sizeof(cl_ObjectData), CL_MEM_WRITE_ONLY);
 
     // Create a program from the kernel source
-    program = clCreateProgramWithSource(context, 1,
-        (const char**)&source_str, (const size_t*)&source_size, &ret);
+    program = boost::compute::program::create_with_source_file("shade_and_reflect_kernel.cl", context);
 
     // Build the program
-    ret = clBuildProgram(program, 1, &device_id, NULL, NULL, NULL);
-    cl_build_status status;
-    ret = clGetProgramBuildInfo(program, device_id, CL_PROGRAM_BUILD_STATUS, sizeof(cl_build_status), &status, NULL);
-    if (ret != 0 || status != CL_BUILD_SUCCESS) {
-        cout << ret << endl;
-
-        size_t s;
-        ret = clGetProgramBuildInfo(program, device_id, CL_PROGRAM_BUILD_LOG, MAX_SOURCE_SIZE, source_str, &s);
-        cout << source_str;
-        throw;
-    }
+    program.build();
 
     // Create the OpenCL kernel
-    kernel = clCreateKernel(program, "shade_and_reflect", &ret);
+    kernel = program.create_kernel("shade_and_reflect");
 
     // Set the arguments of the kernel
-    ret = clSetKernelArg(kernel, 0, sizeof(cl_uint), &MAX_BOUNCES);
-    ret = clSetKernelArg(kernel, 1, sizeof(size_t), &OBJECT_COUNT);
-    ret = clSetKernelArg(kernel, 2, sizeof(cl_mem), (void*)&objs_mem_obj);
-    ret = clSetKernelArg(kernel, 3, sizeof(size_t), &LIGHT_COUNT);
-    ret = clSetKernelArg(kernel, 4, sizeof(cl_mem), (void*)&lights_mem_obj);
-    ret = clSetKernelArg(kernel, 5, sizeof(cl_mem), (void*)&rays_mem_obj);
-    ret = clSetKernelArg(kernel, 6, sizeof(cl_mem), (void*)&pixelData_mem_obj);
+    kernel.set_arg(0, sizeof(cl_uint), &MAX_BOUNCES);
+    kernel.set_arg(1, sizeof(size_t), &OBJECT_COUNT);
+    kernel.set_arg(2, sizeof(cl_mem), (void*)&objs_mem_obj);
+    kernel.set_arg(3, sizeof(size_t), &LIGHT_COUNT);
+    kernel.set_arg(4, sizeof(cl_mem), (void*)&lights_mem_obj);
+    kernel.set_arg(5, sizeof(cl_mem), (void*)&rays_mem_obj);
+    kernel.set_arg(6, sizeof(cl_mem), (void*)&pixelData_mem_obj);
 
-    ret = clEnqueueWriteBuffer(command_queue, objs_mem_obj, CL_TRUE, 0,
-        OBJECT_COUNT * sizeof(cl_ObjectData), objArr, 0, NULL, NULL);
-    ret = clEnqueueWriteBuffer(command_queue, lights_mem_obj, CL_TRUE, 0,
-        LIGHT_COUNT * sizeof(cl_Light), lightArr, 0, NULL, NULL);
-    ret = clEnqueueWriteBuffer(command_queue, rays_mem_obj, CL_TRUE, 0,
-        RAYCAST_COUNT * sizeof(cl_Ray), rayArr, 0, NULL, NULL);
-    ret = clEnqueueWriteBuffer(command_queue, pixelData_mem_obj, CL_TRUE, 0,
-        RAYCAST_COUNT * sizeof(cl_float3), pixelDataArr, 0, NULL, NULL);
+    command_queue.enqueue_write_buffer(objs_mem_obj, 0, OBJECT_COUNT * sizeof(cl_ObjectData), objArr);
+    command_queue.enqueue_write_buffer(lights_mem_obj, 0, LIGHT_COUNT * sizeof(cl_Light), lightArr);
+    command_queue.enqueue_write_buffer(rays_mem_obj, 0, RAYCAST_COUNT * sizeof(cl_Ray), rayArr);
+    command_queue.enqueue_write_buffer(pixelData_mem_obj, 0, RAYCAST_COUNT * sizeof(cl_float3), pixelDataArr);
 }
 
 OpenCLRaytracer::~OpenCLRaytracer() {
+    /*
     cl_int ret;
     ret = clFlush(command_queue);
     ret = clFinish(command_queue);
@@ -118,6 +86,7 @@ OpenCLRaytracer::~OpenCLRaytracer() {
     ret = clReleaseMemObject(pixelData_mem_obj);
     ret = clReleaseCommandQueue(command_queue);
     ret = clReleaseContext(context);
+    */
     delete[] objArr;
     delete[] lightArr;
     delete[] rayArr;
@@ -133,12 +102,10 @@ void OpenCLRaytracer::Render(std::vector<float>& pixelData)
     // Execute the OpenCL kernel on the list
     size_t global_item_size = RAYCAST_COUNT; // Process the entire lists
     size_t local_item_size = 32; // Divide work items into groups of 64
-    cl_int ret = clEnqueueNDRangeKernel(command_queue, kernel, 1, NULL,
-        &global_item_size, &local_item_size, 0, NULL, NULL);
+    command_queue.enqueue_1d_range_kernel(kernel, 0, global_item_size, local_item_size);
 
     // Read the memory buffer C on the device to the local variable C
-    ret = clEnqueueReadBuffer(command_queue, pixelData_mem_obj, CL_TRUE, 0,
-        RAYCAST_COUNT * sizeof(cl_float3), pixelDataArr, 0, NULL, NULL);
+    command_queue.enqueue_read_buffer(pixelData_mem_obj, 0, RAYCAST_COUNT * sizeof(cl_float3), pixelDataArr);
 
     auto endTime = std::chrono::high_resolution_clock::now();
 

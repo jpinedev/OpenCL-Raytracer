@@ -12,7 +12,6 @@
 #include "IRaytracer.hpp"
 #include "OpenCLRaytracer.hpp"
 
-#include <boost/gil/gil_all.hpp>
 #include "PPMExporter.hpp"
 #include "OpenGLView.hpp"
 
@@ -79,18 +78,18 @@ int main(int argc, char** argv) {
     view.SetUpWindow(width, height);
 
     while (!view.ShouldWindowClose()) {
+        auto startTime = std::chrono::high_resolution_clock::now();
+
         raytracer->Render(pixelData);
         view.Display(pixelData);
+
+        auto endTime = std::chrono::high_resolution_clock::now();
+
+        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
+
+        std::cout << "Frame finished in " << duration.count() << "ms.\n";
     }
-    std::cout << "Rendering...\n";
 
-    auto startTime = std::chrono::high_resolution_clock::now();
-
-    auto endTime = std::chrono::high_resolution_clock::now();
-
-    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
-
-    std::cout << "Render finished in " << duration.count() << "ms.\n";
 
     view.TearDownWindow();
 

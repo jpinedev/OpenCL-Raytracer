@@ -109,12 +109,12 @@
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp14</LanguageStandard>
-      <AdditionalIncludeDirectories>C:\Users\pinej\Documents\libs\boost_1_52_0;C:\Users\pinej\Documents\libs\glfw-3.3.8.bin.WIN64\include;C:\Users\pinej\Documents\libs\glm;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.1\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\pinej\Documents\libs\boost_1_82_0;C:\Users\pinej\Documents\libs\glfw-3.3.8.bin.WIN64\include;C:\Users\pinej\Documents\libs\glm;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.1\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>C:\Users\pinej\Documents\libs\glfw-3.3.8.bin.WIN64\lib-vc2022;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.1\lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>C:\Users\pinej\Documents\libs\boost_1_82_0\stage\lib;C:\Users\pinej\Documents\libs\glfw-3.3.8.bin.WIN64\lib-vc2022;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.1\lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>OpenCL.lib;glfw3.lib;opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
