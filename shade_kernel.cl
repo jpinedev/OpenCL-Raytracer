@@ -177,7 +177,7 @@ inline float3 reflect(const float3 incident, const float3 normal) {
     return incident - 2.f * dot(incident, normal) * normal;
 }
 
-__kernel void shade(const uint MAX_BOUNCES, const ulong OBJECT_COUNT, __global const ObjectData* objs, const ulong LIGHT_COUNT, __global const Light* lights, __global const Ray* rays, __global float3* pixelData) {
+__kernel void shade(const uint MAX_BOUNCES, const uint OBJECT_COUNT, __global const ObjectData* objs, const uint LIGHT_COUNT, __global const Light* lights, __global const Ray* rays, __global float3* pixelData) {
     // Get the index of the current element to be processed
     int ii = get_global_id(0);
 

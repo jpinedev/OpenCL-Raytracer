@@ -65,8 +65,8 @@ public:
     virtual cl_float4* Render() override;
 
 private:
-    const unsigned int MAX_BOUNCES;
-    const size_t OBJECT_COUNT, LIGHT_COUNT, RAYCAST_COUNT;
+    const cl_uint MAX_BOUNCES;
+    const cl_uint OBJECT_COUNT, LIGHT_COUNT, RAYCAST_COUNT;
 
     std::vector<cl_ObjectData> objArr;
     std::vector<cl_Light> lightArr;

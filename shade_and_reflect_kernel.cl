@@ -241,7 +241,7 @@ float3 shade(const ulong OBJECT_COUNT, __global const ObjectData* objs, const ul
     return fColor;
 }
 
-__kernel void shade_and_reflect(const uint MAX_BOUNCES, const ulong OBJECT_COUNT, __global const ObjectData* objs, const ulong LIGHT_COUNT, __global const Light* lights, __global const Ray* rays, __global float3* pixelData) {
+__kernel void shade_and_reflect(const uint MAX_BOUNCES, const uint OBJECT_COUNT, __global const ObjectData* objs, const uint LIGHT_COUNT, __global const Light* lights, __global const Ray* rays, __global float3* pixelData) {
     // Get the index of the current element to be processed
     int ii = get_global_id(0);
 
