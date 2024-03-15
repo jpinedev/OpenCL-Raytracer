@@ -1,0 +1,13 @@
+{
+    "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg-tool/main/docs/vcpkg.schema.json",
+    "name": "jpinedev-raytracer",
+    "version": "0.0.0",
+    "dependencies": [
+        "opengl",
+        "opencl",
+        "glm",
+        "glfw3",
+        "glad",
+        "boost"
+    ]
+}
