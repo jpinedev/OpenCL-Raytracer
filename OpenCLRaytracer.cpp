@@ -13,19 +13,19 @@ using namespace std;
 OpenCLRaytracer::OpenCLRaytracer(const std::vector<ObjectData>& objects, const std::vector<Light>& lights, const std::vector<Ray3D>& rays, const unsigned int MAX_BOUNCES)
     : IRaytracer(objects, lights, rays), MAX_BOUNCES(MAX_BOUNCES), OBJECT_COUNT(objects.size()), LIGHT_COUNT(lights.size()), RAYCAST_COUNT(rays.size())
 {
-    objArr.reserve(OBJECT_COUNT);
+    objArr.reserve((size_t)OBJECT_COUNT);
     for (int i = 0; i < OBJECT_COUNT; i++) {
         objArr.emplace_back(objects[i]);
     }
 
-    lightArr.reserve(LIGHT_COUNT);
+    lightArr.reserve((size_t)LIGHT_COUNT);
     for (int i = 0; i < LIGHT_COUNT; i++) {
         lightArr.emplace_back(lights[i]);
     }
 
-    rayArr.reserve(RAYCAST_COUNT);
+    rayArr.reserve((size_t)RAYCAST_COUNT);
 
-    pixelDataArr = new cl_float3[RAYCAST_COUNT];
+    pixelDataArr = new cl_float3[(size_t)RAYCAST_COUNT];
     for (int i = 0; i < RAYCAST_COUNT; i++) {
         rayArr.emplace_back(rays[i]);
 
@@ -44,10 +44,10 @@ OpenCLRaytracer::OpenCLRaytracer(const std::vector<ObjectData>& objects, const s
     command_queue = boost::compute::system::default_queue();
 
     // Create memory buffers on the device for each vector 
-    objs_mem_obj = boost::compute::buffer(context, OBJECT_COUNT * sizeof(cl_ObjectData), CL_MEM_READ_ONLY);
-    lights_mem_obj = boost::compute::buffer(context, LIGHT_COUNT * sizeof(cl_Light), CL_MEM_READ_ONLY);
-    rays_mem_obj = boost::compute::buffer(context, RAYCAST_COUNT * sizeof(cl_Ray), CL_MEM_READ_ONLY);
-    pixelData_mem_obj = boost::compute::buffer(context, RAYCAST_COUNT * sizeof(cl_ObjectData), CL_MEM_WRITE_ONLY);
+    objs_mem_obj = boost::compute::buffer(context, (size_t)OBJECT_COUNT * sizeof(cl_ObjectData), CL_MEM_READ_ONLY);
+    lights_mem_obj = boost::compute::buffer(context, (size_t)LIGHT_COUNT * sizeof(cl_Light), CL_MEM_READ_ONLY);
+    rays_mem_obj = boost::compute::buffer(context, (size_t)RAYCAST_COUNT * sizeof(cl_Ray), CL_MEM_READ_ONLY);
+    pixelData_mem_obj = boost::compute::buffer(context, (size_t)RAYCAST_COUNT * sizeof(cl_ObjectData), CL_MEM_WRITE_ONLY);
 
     // Create a program from the kernel source
     program = boost::compute::program::create_with_source_file("shade_and_reflect_kernel.cl", context);
@@ -60,17 +60,17 @@ OpenCLRaytracer::OpenCLRaytracer(const std::vector<ObjectData>& objects, const s
 
     // Set the arguments of the kernel
     kernel.set_arg(0, sizeof(cl_uint), &MAX_BOUNCES);
-    kernel.set_arg(1, sizeof(size_t), &OBJECT_COUNT);
+    kernel.set_arg(1, sizeof(cl_uint), &OBJECT_COUNT);
     kernel.set_arg(2, sizeof(cl_mem), (void*)&objs_mem_obj);
-    kernel.set_arg(3, sizeof(size_t), &LIGHT_COUNT);
+    kernel.set_arg(3, sizeof(cl_uint), &LIGHT_COUNT);
     kernel.set_arg(4, sizeof(cl_mem), (void*)&lights_mem_obj);
     kernel.set_arg(5, sizeof(cl_mem), (void*)&rays_mem_obj);
     kernel.set_arg(6, sizeof(cl_mem), (void*)&pixelData_mem_obj);
 
-    command_queue.enqueue_write_buffer(objs_mem_obj, 0, OBJECT_COUNT * sizeof(cl_ObjectData), objArr.data());
-    command_queue.enqueue_write_buffer(lights_mem_obj, 0, LIGHT_COUNT * sizeof(cl_Light), lightArr.data());
-    command_queue.enqueue_write_buffer(rays_mem_obj, 0, RAYCAST_COUNT * sizeof(cl_Ray), rayArr.data());
-    command_queue.enqueue_write_buffer(pixelData_mem_obj, 0, RAYCAST_COUNT * sizeof(cl_float3), pixelDataArr);
+    command_queue.enqueue_write_buffer(objs_mem_obj, 0, (size_t)OBJECT_COUNT * sizeof(cl_ObjectData), objArr.data());
+    command_queue.enqueue_write_buffer(lights_mem_obj, 0, (size_t)LIGHT_COUNT * sizeof(cl_Light), lightArr.data());
+    command_queue.enqueue_write_buffer(rays_mem_obj, 0, (size_t)RAYCAST_COUNT * sizeof(cl_Ray), rayArr.data());
+    command_queue.enqueue_write_buffer(pixelData_mem_obj, 0, (size_t)RAYCAST_COUNT * sizeof(cl_float3), pixelDataArr);
 }
 
 OpenCLRaytracer::~OpenCLRaytracer() {
@@ -86,12 +86,12 @@ cl_float4* OpenCLRaytracer::Render()
 #endif
 
     // Execute the OpenCL kernel on the list
-    size_t global_item_size = RAYCAST_COUNT; // Process the entire lists
+    size_t global_item_size = (size_t)RAYCAST_COUNT; // Process the entire lists
     size_t local_item_size = 32; // Divide work items into groups of 64
     command_queue.enqueue_1d_range_kernel(kernel, 0, global_item_size, local_item_size);
 
     // Read the memory buffer C on the device to the local variable C
-    command_queue.enqueue_read_buffer(pixelData_mem_obj, 0, RAYCAST_COUNT * sizeof(cl_float3), pixelDataArr);
+    command_queue.enqueue_read_buffer(pixelData_mem_obj, 0, (size_t)RAYCAST_COUNT * sizeof(cl_float3), pixelDataArr);
 
 #if _DEBUG
     auto endTime = std::chrono::high_resolution_clock::now();
