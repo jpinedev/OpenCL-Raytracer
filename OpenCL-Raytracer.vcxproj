@@ -149,33 +149,24 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="ObjectData.cpp" />
-    <ClCompile Include="OpenCLRaytracer.cpp" />
-    <ClCompile Include="OpenCL-Raytracer.cpp" />
+    <ClCompile Include="OpenGL-Raytracer.cpp" />
     <ClCompile Include="OpenGLModel.cpp" />
     <ClCompile Include="OpenGLView.cpp" />
-    <ClCompile Include="PPMExporter.cpp" />
+    <ClCompile Include="PNGExporter.cpp" />
     <ClCompile Include="SceneLoader.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="frag_shader.glsl" />
-    <None Include="hittest_kernel.cl" />
-    <None Include="shade.glsl" />
     <None Include="shade_and_reflect.glsl" />
-    <None Include="shade_and_reflect_kernel.cl" />
-    <None Include="shade_kernel.cl" />
-    <None Include="vector_add_kernel.cl" />
     <None Include="vert_shader.glsl" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="HitRecord.hpp" />
-    <ClInclude Include="IRaytracer.hpp" />
     <ClInclude Include="Light.hpp" />
     <ClInclude Include="Material.hpp" />
     <ClInclude Include="ObjectData.hpp" />
-    <ClInclude Include="OpenCLRaytracer.hpp" />
     <ClInclude Include="OpenGLModel.h" />
     <ClInclude Include="OpenGLView.hpp" />
-    <ClInclude Include="PPMExporter.hpp" />
+    <ClInclude Include="PNGExporter.h" />
     <ClInclude Include="Ray3D.hpp" />
     <ClInclude Include="SceneLoader.hpp" />
   </ItemGroup>

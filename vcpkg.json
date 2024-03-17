@@ -5,6 +5,7 @@
     "dependencies": [
         "opengl",
         "opencl",
+        "opencv",
         "glm",
         "glfw3",
         "glad",

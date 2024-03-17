@@ -15,7 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="OpenCL-Raytracer.cpp">
+    <ClCompile Include="OpenGL-Raytracer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="ObjectData.cpp">
@@ -24,38 +24,17 @@
     <ClCompile Include="SceneLoader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="OpenCLRaytracer.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="OpenGLView.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="PPMExporter.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="OpenGLModel.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="PNGExporter.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="vector_add_kernel.cl">
-      <Filter>Source Files</Filter>
-    </None>
-    <None Include="hittest_kernel.cl">
-      <Filter>Source Files</Filter>
-    </None>
-    <None Include="shade_kernel.cl">
-      <Filter>Source Files</Filter>
-    </None>
-    <None Include="shade_and_reflect_kernel.cl">
-      <Filter>Source Files</Filter>
-    </None>
-    <None Include="shade.glsl">
-      <Filter>Source Files</Filter>
-    </None>
-    <None Include="frag_shader.glsl">
-      <Filter>Source Files</Filter>
-    </None>
     <None Include="vert_shader.glsl">
       <Filter>Source Files</Filter>
     </None>
@@ -82,19 +61,13 @@
     <ClInclude Include="SceneLoader.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="IRaytracer.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="OpenCLRaytracer.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="OpenGLView.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="PPMExporter.hpp">
+    <ClInclude Include="OpenGLModel.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="OpenGLModel.h">
+    <ClInclude Include="PNGExporter.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -1,19 +1,17 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/string_cast.hpp>
-#include "Ray3D.hpp"
-#include "ObjectData.hpp"
 #include <chrono>
 #include <vector>
 #include <fstream>
 #include <iostream>
-#include "Light.hpp"
-#include "SceneLoader.hpp"
-#include "IRaytracer.hpp"
-#include "OpenCLRaytracer.hpp"
 
-#include "PPMExporter.hpp"
+#include "Ray3D.hpp"
+#include "Light.hpp"
+#include "ObjectData.hpp"
 #include "OpenGLView.hpp"
+#include "PNGExporter.h"
+#include "SceneLoader.hpp"
 
 Ray3D screenSpaceToViewSpace(float width, float height, glm::vec2 pos, float angle) {
     float halfWidth = width / 2.0f;
@@ -31,7 +29,7 @@ int main(int argc, char** argv) {
     float fov = glm::radians(60.f);
     fov *= 0.5f;
     // TODO: add flag for output file
-    std::string outFileLoc = "render.ppm";
+    std::string outFileLoc = "render.png";
 
     if (argc > 2) {
         return 1;
@@ -81,8 +79,7 @@ int main(int argc, char** argv) {
     }
 
     auto pixels = view.GetFrameAsPixels(width, height);
-    PPMExporter exporter;
-    exporter.ExportP3(outFileLoc, width, height, pixels);
+    PNGExporter::Export(outFileLoc, width, height, pixels);
 
     view.TearDownWindow();
 
