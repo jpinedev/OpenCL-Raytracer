@@ -61,20 +61,8 @@ int main(int argc, char** argv) {
 
     std::cout << "Scene file loaded without any errors.\n";
 
-    std::vector<Ray3D> rays;
-    std::vector<HitRecord> rayHits(height * width);
-    std::vector<float> pixelData(height * width * 3);
-    
-    for (int jj = 0; jj < height; ++jj) {
-        for (int ii = 0; ii < width; ++ii) {
-            rays.emplace_back(screenSpaceToViewSpace((float)width, (float)height, glm::vec2(ii, height - jj), fov));
-        }
-    }
-
-    //IRaytracer* raytracer = (IRaytracer*)new CPURaytracer();
-    IRaytracer* raytracer = (IRaytracer*)new OpenCLRaytracer(objects, lights, rays, 30);
-
-    OpenGLView view;
+    OpenGLModel model(8, objects, lights);
+    OpenGLView view(model);
 
     view.SetUpWindow(width, height);
 
@@ -82,9 +70,7 @@ int main(int argc, char** argv) {
 #if _DEBUG
         auto startTime = std::chrono::high_resolution_clock::now();
 #endif
-
-        auto pixelData = raytracer->Render();
-        view.Display(pixelData);
+        view.Render();
 
 #if _DEBUG
         auto endTime = std::chrono::high_resolution_clock::now();
@@ -95,10 +81,7 @@ int main(int argc, char** argv) {
 #endif
     }
 
-
     view.TearDownWindow();
-
-    //PPMExporter::ExportP3(outFileLoc, width, height, pixelData);
 
     return 0;
 }
