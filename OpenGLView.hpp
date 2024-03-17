@@ -16,10 +16,12 @@ public:
 
     void Render();
 
-    void SetUpWindow(size_t width, size_t height);
+    void SetUpWindow(GLuint width, GLuint height);
     void TearDownWindow();
 
     bool ShouldWindowClose();
+
+    void SetWindowSize(GLuint width, GLuint height);
 
 private:
     GLuint LoadShader(GLenum type, const std::string& source);
@@ -28,7 +30,7 @@ private:
 
     OpenGLModel& model;
 
-    size_t width, height;
+    GLuint width, height;
     GLFWwindow* window = NULL;
 
     GLuint shaderProgram;

@@ -22,14 +22,10 @@ void OpenGLView::Render()
     glfwSwapBuffers(window);
 }
 
-void OpenGLView::SetUpWindow(size_t width, size_t height)
+void OpenGLView::SetUpWindow(GLuint width, GLuint height)
 {
     if (!glfwInit())
         throw std::runtime_error("GLFW could not be initialized.");
-
-
-    this->width = width;
-    this->height = height;
 
     window = glfwCreateWindow(width, height, "OpenCL Render", NULL, NULL);
 
@@ -40,6 +36,15 @@ void OpenGLView::SetUpWindow(size_t width, size_t height)
     }
 
     glfwMakeContextCurrent(window);
+    glfwSetWindowUserPointer(window, this);
+    glfwSetFramebufferSizeCallback(window, [](GLFWwindow* window, GLint width, GLint height)
+        {
+            auto view = reinterpret_cast<OpenGLView*>(glfwGetWindowUserPointer(window));
+            if (!view)
+                std::cerr << "Window user ptr not set." << std::endl;
+
+            view->SetWindowSize(width, height);
+        });
 
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
     {
@@ -88,6 +93,7 @@ void OpenGLView::SetUpWindow(size_t width, size_t height)
     glEnableVertexAttribArray(0);
 
     LoadScene();
+    SetWindowSize(width, height);
 }
 
 void OpenGLView::TearDownWindow()
@@ -101,6 +107,14 @@ void OpenGLView::TearDownWindow()
 bool OpenGLView::ShouldWindowClose()
 {
     return glfwWindowShouldClose(window);
+}
+
+void OpenGLView::SetWindowSize(GLuint width, GLuint height)
+{
+    this->width = width;
+    this->height = height;
+    glViewport(0, 0, width, height);
+    glUniform2f(glGetUniformLocation(shaderProgram, "camera.frameSize"), float(width), float(height));
 }
 
 static std::string LoadShaderSourceFromFile(const std::string& sourceFile)
