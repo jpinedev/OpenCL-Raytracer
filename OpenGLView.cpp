@@ -109,6 +109,32 @@ bool OpenGLView::ShouldWindowClose()
     return glfwWindowShouldClose(window);
 }
 
+std::vector<float> OpenGLView::GetFrameAsPixels(GLuint& outWidth, GLuint& outHeight)
+{
+    std::vector<float> pixels(3 * size_t(width) * height);
+
+    glReadPixels(0, 0, width, height, GL_RGB, GL_FLOAT, pixels.data());
+
+    std::vector<float> flipped = pixels;
+    for (size_t jj = 0; jj < height / 2; ++jj)
+    {
+        for (size_t ii = 0; ii < width; ++ii)
+        {
+            size_t index = jj * width + ii;
+            float* firstPixel = &pixels[(jj * width + ii) * 3];
+            float* lastPixel = &pixels[((height - jj - 1) * width + ii) * 3];
+
+            std::swap(firstPixel[0], lastPixel[0]);
+            std::swap(firstPixel[1], lastPixel[1]);
+            std::swap(firstPixel[2], lastPixel[2]);
+        }
+    }
+
+    outWidth = width;
+    outHeight = height;
+    return pixels;
+}
+
 void OpenGLView::SetWindowSize(GLuint width, GLuint height)
 {
     this->width = width;

@@ -21,6 +21,7 @@ public:
 
     bool ShouldWindowClose();
 
+    std::vector<float> GetFrameAsPixels(GLuint& outWidth, GLuint& outHeight);
     void SetWindowSize(GLuint width, GLuint height);
 
 private:
@@ -35,8 +36,5 @@ private:
 
     GLuint shaderProgram;
     GLuint quadVAO, quadVBO;
-    GLuint image;
-
-    GLint cameraUniform;
 };
 

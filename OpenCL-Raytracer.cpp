@@ -27,8 +27,7 @@ Ray3D screenSpaceToViewSpace(float width, float height, glm::vec2 pos, float ang
 
 int main(int argc, char** argv) {
     // TODO: add flags for setting these vars
-    //int width = 1920, height = 1080;
-    int width = 2560, height = 1440;
+    GLuint width = 2560, height = 1440;
     float fov = glm::radians(60.f);
     fov *= 0.5f;
     // TODO: add flag for output file
@@ -80,6 +79,10 @@ int main(int argc, char** argv) {
         std::cout << "Frame finished in " << duration.count() << "ms.\n";
 #endif
     }
+
+    auto pixels = view.GetFrameAsPixels(width, height);
+    PPMExporter exporter;
+    exporter.ExportP3(outFileLoc, width, height, pixels);
 
     view.TearDownWindow();
 
