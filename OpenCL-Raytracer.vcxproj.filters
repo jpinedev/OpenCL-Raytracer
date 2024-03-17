@@ -59,6 +59,9 @@
     <None Include="vert_shader.glsl">
       <Filter>Source Files</Filter>
     </None>
+    <None Include="shade_and_reflect.glsl">
+      <Filter>Source Files</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ObjectData.hpp">

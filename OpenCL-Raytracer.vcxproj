@@ -160,6 +160,7 @@
     <None Include="frag_shader.glsl" />
     <None Include="hittest_kernel.cl" />
     <None Include="shade.glsl" />
+    <None Include="shade_and_reflect.glsl" />
     <None Include="shade_and_reflect_kernel.cl" />
     <None Include="shade_kernel.cl" />
     <None Include="vector_add_kernel.cl" />

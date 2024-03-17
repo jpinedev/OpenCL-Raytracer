@@ -49,7 +49,7 @@ void OpenGLView::SetUpWindow(size_t width, size_t height)
 
     shaderProgram = glCreateProgram();
     GLuint vertShader = LoadShader(GL_VERTEX_SHADER, "vert_shader.glsl");
-    GLuint fragShader = LoadShader(GL_FRAGMENT_SHADER, "shade.glsl");
+    GLuint fragShader = LoadShader(GL_FRAGMENT_SHADER, "shade_and_reflect.glsl");
     glAttachShader(shaderProgram, vertShader);
     glAttachShader(shaderProgram, fragShader);
     glLinkProgram(shaderProgram);
@@ -153,6 +153,8 @@ void OpenGLView::LoadScene()
     glUseProgram(shaderProgram);
     glUniform2f(glGetUniformLocation(shaderProgram, "camera.frameSize"), float(width), float(height));
     glUniform1f(glGetUniformLocation(shaderProgram, "camera.fov"), glm::radians(60.f) / 2.f);
+
+    glUniform1ui(glGetUniformLocation(shaderProgram, "MAX_BOUNCES"), model.MAX_BOUNCES);
 
     const GLuint MAX_OBJECTS = 16;
     const GLuint MAX_LIGHTS = 16;
