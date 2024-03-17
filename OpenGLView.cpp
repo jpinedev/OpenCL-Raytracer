@@ -152,7 +152,7 @@ void OpenGLView::LoadScene()
 {
     glUseProgram(shaderProgram);
     glUniform2f(glGetUniformLocation(shaderProgram, "camera.frameSize"), float(width), float(height));
-    glUniform1f(glGetUniformLocation(shaderProgram, "camera.fov"), 60.f);
+    glUniform1f(glGetUniformLocation(shaderProgram, "camera.fov"), glm::radians(60.f) / 2.f);
 
     const GLuint MAX_OBJECTS = 16;
     const GLuint MAX_LIGHTS = 16;
@@ -189,7 +189,7 @@ void OpenGLView::LoadScene()
     {
         auto& light = lights[ii];
         std::string lightPrefix = prefix + std::to_string(ii) + "].";
-        glUniform4fv(glGetUniformLocation(shaderProgram, (lightPrefix + "ambient").c_str()), 1, glm::value_ptr(light.ambient));
+        glUniform3fv(glGetUniformLocation(shaderProgram, (lightPrefix + "ambient").c_str()), 1, glm::value_ptr(light.ambient));
         glUniform3fv(glGetUniformLocation(shaderProgram, (lightPrefix + "diffuse").c_str()), 1, glm::value_ptr(light.diffuse));
         glUniform3fv(glGetUniformLocation(shaderProgram, (lightPrefix + "specular").c_str()), 1, glm::value_ptr(light.specular));
         glUniform4fv(glGetUniformLocation(shaderProgram, (lightPrefix + "position").c_str()), 1, glm::value_ptr(light.lightPosition));

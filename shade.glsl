@@ -48,13 +48,6 @@ const float MAX_FLOAT = 3.402823466e+38;
 
 bool intersectsWithBoxSide(inout float tMin, inout float tMax, float start, float dir);
 
-// inline void transform(float4* o_vec, const float16* i_mat, const float4* i_vec) {
-//     o_vec->x = i_mat->s0 * i_vec->x + i_mat->s4 * i_vec->y + i_mat->s8 * i_vec->z + i_mat->sC * i_vec->w;
-//     o_vec->y = i_mat->s1 * i_vec->x + i_mat->s5 * i_vec->y + i_mat->s9 * i_vec->z + i_mat->sD * i_vec->w;
-//     o_vec->z = i_mat->s2 * i_vec->x + i_mat->s6 * i_vec->y + i_mat->sA * i_vec->z + i_mat->sE * i_vec->w;
-//     o_vec->w = i_mat->s3 * i_vec->x + i_mat->s7 * i_vec->y + i_mat->sB * i_vec->z + i_mat->sF * i_vec->w;
-// }
-
 bool raycast(const uint count, const ObjectData[MAX_OBJECT_COUNT] objs, in const Ray viewspaceRay, inout HitRecord hit)
 {
     Ray ray;
@@ -63,9 +56,7 @@ bool raycast(const uint count, const ObjectData[MAX_OBJECT_COUNT] objs, in const
         const ObjectData obj = objs[objIndex];
 
         ray.start = obj.mvInverse * viewspaceRay.start;
-        // transform(&ray.start, &obj->mvInverse, &viewspaceRay->start);
         ray.direction = obj.mvInverse * viewspaceRay.direction;
-        // transform(&ray.direction, &obj->mvInverse, &viewspaceRay->direction);
 
         switch (obj.type) {
         case 0: // Sphere
@@ -100,11 +91,9 @@ bool raycast(const uint count, const ObjectData[MAX_OBJECT_COUNT] objs, in const
 
             vec4 objSpaceIntersection = ray.start + tMin * ray.direction;
             hit.intersection = obj.mv * objSpaceIntersection;
-            // transform(&hit->intersection, &obj->mv, &objSpaceIntersection);
             vec4 objSpaceNormal = objSpaceIntersection;
             objSpaceNormal.w = 0.0;
             vec4 normal = obj.mv * objSpaceNormal;
-            // transform(&normal, obj->mv, objSpaceNormal);
             hit.normal = normalize(normal.xyz);
             hit.mat = obj.mat;
             continue;
@@ -151,9 +140,7 @@ bool raycast(const uint count, const ObjectData[MAX_OBJECT_COUNT] objs, in const
 
             hit.time = tHit;
             hit.intersection = obj.mv * objSpaceIntersection;
-            // transform(&hit->intersection, &obj->mv, &objSpaceIntersection);
             vec4 normal = obj.mv * objSpaceNormal;
-            // transform(&normal, &obj->mv, &objSpaceNormal);
             hit.normal = normalize(normal.xyz);
             hit.mat = obj.mat;
             continue;
@@ -163,11 +150,6 @@ bool raycast(const uint count, const ObjectData[MAX_OBJECT_COUNT] objs, in const
     }
 
     return (hit.time < MAX_FLOAT);
-}
-
-vec3 componentWiseMultiply(const vec3 lhs, const vec3 rhs)
-{
-    return (vec3)(lhs.x * rhs.x, lhs.y * rhs.y, lhs.z * rhs.z);
 }
 
 // assumes normal is normalized
@@ -259,13 +241,13 @@ void main() {
         rDotV = dot(reflectVec, viewVec);
         rDotV = max(rDotV, 0.0f);
 
-        ambient = componentWiseMultiply(hit.mat.ambient, light.ambient);
+        ambient = hit.mat.ambient * light.ambient;
 
         // Object cannot directly see the light
         if (shadowcastHit.time >= 1.0 || shadowcastHit.time < 0) {
-            diffuse = componentWiseMultiply(hit.mat.diffuse, light.diffuse) * max(nDotL, 0.0);
+            diffuse = hit.mat.diffuse * light.diffuse * max(nDotL, 0.0);
             if (nDotL > 0)
-                specular = componentWiseMultiply(hit.mat.specular, light.specular) * pow(rDotV, max(hit.mat.shininess, 1.0));
+                specular = hit.mat.specular * light.specular * pow(rDotV, max(hit.mat.shininess, 1.0));
         }
         else {
             diffuse = vec3( 0.0, 0.0, 0.0 );
